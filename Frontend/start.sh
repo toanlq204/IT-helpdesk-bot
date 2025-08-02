@@ -4,17 +4,29 @@
 
 echo "🚀 Starting IT HelpDesk Chatbot..."
 
+# Get the script directory and go to project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$PROJECT_ROOT"
+
 # Check if backend virtual environment exists
-if [ ! -d "backend/venv" ]; then
+if [ ! -d "Backend/venv" ]; then
     echo "⚠️  Virtual environment not found. Setting up backend..."
-    cd backend
-    ./setup.sh
+    cd Backend
+    if [ -f "setup.sh" ]; then
+        ./setup.sh
+    else
+        echo "📦 Creating virtual environment..."
+        python3 -m venv venv
+        source venv/bin/activate
+        pip install -r requirements.txt
+    fi
     cd ..
 fi
 
 # Check if .env file exists in backend directory
-if [ ! -f "backend/.env" ]; then
-    echo "❌ backend/.env file not found. Please create one from backend/.env.example and add your OpenAI API key."
+if [ ! -f "Backend/.env" ]; then
+    echo "❌ Backend/.env file not found. Please create one from backend/.env.example and add your OpenAI API key."
     exit 1
 fi
 
@@ -36,11 +48,11 @@ if check_port 8000; then
 fi
 
 # Create necessary directories in backend
-mkdir -p backend/uploads backend/conversations backend/data
+mkdir -p Backend/uploads Backend/conversations Backend/data
 
 # Start backend server
 echo "🐍 Starting Python backend server..."
-cd backend
+cd Backend
 source venv/bin/activate
 python main.py &
 BACKEND_PID=$!
@@ -50,7 +62,7 @@ sleep 3
 
 # Start frontend server
 echo "⚛️  Starting React frontend server..."
-cd ..
+cd ../Frontend
 npm start &
 FRONTEND_PID=$!
 
@@ -77,4 +89,4 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 # Wait for processes
-wait 
+wait
