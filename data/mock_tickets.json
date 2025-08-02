@@ -1,0 +1,13 @@
+{
+  "tickets": [
+    {
+      "id": 1,
+      "title": "Simulated Ticket",
+      "description": "Detailed description of the issue",
+      "status": "open",
+      "priority": "medium",
+      "created_date": "2025-08-02",
+      "assigned_to": "admin"
+    }
+  ]
+}
