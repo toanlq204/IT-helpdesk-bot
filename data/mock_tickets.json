@@ -1,66 +1,13 @@
 {
   "tickets": [
     {
-      "id": "TKT001",
-      "title": "Password Reset Request",
-      "description": "User John.Doe@company.com cannot access his account after vacation. Multiple failed login attempts.",
-      "status": "in_progress",
-      "priority": "medium",
-      "category": "authentication",
-      "created_date": "2025-08-02",
-      "assigned_to": "admin",
-      "reporter": "john.doe@company.com",
-      "estimated_resolution": "2 hours"
-    },
-    {
-      "id": "TKT002", 
-      "title": "Laptop Performance Issues",
-      "description": "Marketing team laptop (Asset #LAP-MKT-045) running extremely slow. Takes 10+ minutes to boot, applications freeze frequently.",
+      "id": 1,
+      "title": "Simulated Ticket",
+      "description": "Detailed description of the issue",
       "status": "open",
-      "priority": "high",
-      "category": "hardware",
-      "created_date": "2025-08-01",
-      "assigned_to": "tech_support",
-      "reporter": "sarah.wilson@company.com",
-      "estimated_resolution": "4 hours"
-    },
-    {
-      "id": "TKT003",
-      "title": "Software Installation Request",
-      "description": "Development team needs Adobe Creative Suite installed on 5 workstations for new project.",
-      "status": "pending_approval",
-      "priority": "low",
-      "category": "software",
-      "created_date": "2025-07-30",
-      "assigned_to": "it_manager",
-      "reporter": "dev.team@company.com",
-      "estimated_resolution": "24 hours"
-    },
-    {
-      "id": "TKT004",
-      "title": "Network Connectivity Issues",
-      "description": "Conference Room B cannot connect to WiFi. Multiple users affected during important client meetings.",
-      "status": "resolved",
-      "priority": "critical",
-      "category": "network",
-      "created_date": "2025-07-28",
-      "assigned_to": "network_admin",
-      "reporter": "facilities@company.com",
-      "estimated_resolution": "1 hour",
-      "resolution_notes": "WiFi access point firmware updated and range extender installed."
-    },
-    {
-      "id": "TKT005",
-      "title": "Email Server Outage",
-      "description": "Company-wide email service down. Users cannot send or receive emails since 9:00 AM.",
-      "status": "resolved",
-      "priority": "critical",
-      "category": "email",
-      "created_date": "2025-07-25",
-      "assigned_to": "sys_admin",
-      "reporter": "multiple_users",
-      "estimated_resolution": "30 minutes",
-      "resolution_notes": "Exchange server restarted and service restored. Root cause: memory leak in mail service."
+      "priority": "medium",
+      "created_date": "2025-08-02",
+      "assigned_to": "admin"
     }
   ]
 }
