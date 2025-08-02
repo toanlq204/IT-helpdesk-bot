@@ -49,12 +49,25 @@ function App() {
       console.error('Failed to load conversations:', error);
     }
   };
+  
+  const onConversationUpdate = async (response) => {
+    try {
+      loadConversations();
+      setSelectedConversation({
+        id: response.conversation_id,
+        messages: response.messages
+      });
+    } catch (error) {
+      console.error('Failed to load conversations:', error);
+    }
+  };
 
   const handleNewConversation = () => {
     setSelectedConversation(null);
   };
 
   const handleConversationSelect = (conversation) => {
+    debugger;
     setSelectedConversation(conversation);
   };
 
@@ -114,7 +127,7 @@ function App() {
         {/* Main Content */}
         <Box className="flex-1 flex overflow-hidden">
           {/* Left Sidebar - Conversations and File Upload */}
-          <Box className="w-80 border-r border-gray-200 bg-gray-50 flex flex-col">
+          <Box className="w-80 border-r border-gray-200 bg-gray-50 flex flex-col ">
             {/* File Upload Section */}
             <Box className="p-4 border-b border-gray-200 bg-white">
               <FileUpload
@@ -124,7 +137,7 @@ function App() {
             </Box>
             
             {/* Conversations List */}
-            <Box className="flex-1">
+            <Box className="flex-1 overflow-y-auto">
               <ConversationList
                 conversations={conversations}
                 selectedConversation={selectedConversation}
@@ -142,7 +155,7 @@ function App() {
             ) : (
               <ChatWindow
                 conversation={selectedConversation}
-                onConversationUpdate={loadConversations}
+                onConversationUpdate={onConversationUpdate}
                 uploadedFiles={uploadedFiles}
               />
             )}

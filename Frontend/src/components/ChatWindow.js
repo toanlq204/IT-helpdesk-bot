@@ -78,7 +78,7 @@ const ChatWindow = ({ conversation, onConversationUpdate, uploadedFiles }) => {
 
       // Update conversation list if new conversation was created
       if (!conversation && response.conversation_id) {
-        onConversationUpdate();
+        onConversationUpdate(response);
       }
     } catch (error) {
       console.error('Failed to send message:', error);
