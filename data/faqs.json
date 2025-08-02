@@ -2,8 +2,8 @@
   "faqs": [
     {
       "id": 1,
-      "question": "Câu hỏi thường gặp về IT",
-      "answer": "Đây là câu trả lời mẫu cho câu hỏi IT thường gặp.",
+      "question": "Frequently asked IT question",
+      "answer": "This is a sample answer for a common IT question.",
       "category": "general",
       "keywords": ["it", "help", "support"]
     }
