@@ -58,5 +58,25 @@
     "assignee": "",
     "created_at": "2025-08-02T17:18:24.133839",
     "updated_at": "2025-08-02T17:18:24.133859"
+  },
+  {
+    "id": "cde744c8-7a64-4cbd-94fb-77a1ad76535f",
+    "title": "Can not upload file to sharepoint",
+    "description": "Receive timeout error when uploading file to SharePoint. Need to address it ASAP.",
+    "priority": "medium",
+    "status": "open",
+    "assignee": "",
+    "created_at": "2025-08-02T17:48:16.869596",
+    "updated_at": "2025-08-02T17:48:16.869607"
+  },
+  {
+    "id": "adf76a3b-8109-41a6-b25a-4d795954cf01",
+    "title": "Laptop Running Slow",
+    "description": "User reports their laptop is running very slowly after the latest Windows update.",
+    "priority": "medium",
+    "status": "open",
+    "assignee": "",
+    "created_at": "2025-08-02T17:49:42.801493",
+    "updated_at": "2025-08-02T17:49:42.801500"
   }
 ]

@@ -44,13 +44,14 @@ class ChatService:
     def get_response(self, messages: list) -> str:
         
         client = openai.OpenAI(
-            base_url="https://aiportalapi.stu-platform.live/jpe",
-            api_key="sk-eLGzT-nzAEWvdhOxMKXsmw"
+            base_url=os.getenv("OPENAI_BASE_URL"),
+            api_key=os.getenv("AZOPENAI_API_KEY")
         )
 
         response = client.chat.completions.create(
-            model="GPT-4o-mini",
-            max_tokens=500,
+            model=os.getenv("OPENAI_MODEL"),
+            max_tokens=int(os.getenv("OPENAI_MAX_TOKENS")),
+            temperature=float(os.getenv("OPENAI_TEMPERATURE")),
             messages=self.prepare_messages(messages),
             tools=[
                 {
