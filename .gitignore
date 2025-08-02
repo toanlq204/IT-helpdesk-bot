@@ -1,2 +1,2 @@
 Frontend/node_modules
-Backend/models/__pycache__
+Backend/**/*/__pycache__

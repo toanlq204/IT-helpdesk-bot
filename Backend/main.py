@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
-from routers import ticket_router
+from routers import ticket_router, conversation_router
 # Load environment variables
 load_dotenv()
 
@@ -23,6 +23,8 @@ os.makedirs("tickets", exist_ok=True)
 os.makedirs("threads", exist_ok=True)
 os.makedirs("data", exist_ok=True)
 app.include_router(ticket_router, tags=["Tickets"])
+app.include_router(conversation_router, tags=["Conversations"])
+
 @app.get("/")
 async def root():
     """Root endpoint"""
