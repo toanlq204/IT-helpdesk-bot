@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Box, AppBar, Toolbar, Typography, IconButton } from '@mui/material';
+import { 
+  Box, 
+  AppBar, 
+  Toolbar, 
+  Typography, 
+  IconButton,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
+} from '@mui/material';
 import { Chat as ChatIcon, BugReport as BugReportIcon } from '@mui/icons-material';
 import ConversationList from './components/ConversationList';
 import ChatWindow from './components/ChatWindow';
@@ -25,6 +35,7 @@ function App() {
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [showTicketManager, setShowTicketManager] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [selectedRole, setSelectedRole] = useState('User');
 
   useEffect(() => {
     loadConversations();
@@ -51,6 +62,10 @@ function App() {
     setUploadedFiles(prev => [...prev, ...files]);
   };
 
+  const handleRoleChange = (event) => {
+    setSelectedRole(event.target.value);
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -62,6 +77,30 @@ function App() {
             <Typography variant="h6" component="div" className="flex-grow">
               IT HelpDesk Chatbot
             </Typography>
+            
+            {/* Role Selection Dropdown */}
+            <FormControl variant="filled" size="small" className="mr-2">
+              <InputLabel id="role-select-label" sx={{ color: 'white' }}>
+                Role
+              </InputLabel>
+              <Select
+                labelId="role-select-label"
+                value={selectedRole}
+                onChange={handleRoleChange}
+                sx={{
+                  color: 'white',
+                  '.MuiSelect-icon': { color: 'white' },
+                  '.MuiFilledInput-underline:before': { borderBottomColor: 'rgba(255, 255, 255, 0.42)' },
+                  '.MuiFilledInput-underline:hover:before': { borderBottomColor: 'white' },
+                  '.MuiFilledInput-underline:after': { borderBottomColor: 'white' }
+                }}
+              >
+                <MenuItem value="Admin">Admin</MenuItem>
+                <MenuItem value="User">User</MenuItem>
+                <MenuItem value="Officer">Officer</MenuItem>
+              </Select>
+            </FormControl>
+            
             <IconButton
               color="inherit"
               onClick={() => setShowTicketManager(!showTicketManager)}
@@ -74,15 +113,26 @@ function App() {
 
         {/* Main Content */}
         <Box className="flex-1 flex overflow-hidden">
-          {/* Left Sidebar - Conversations */}
-          <Box className="w-80 border-r border-gray-200 bg-gray-50">
-            <ConversationList
-              conversations={conversations}
-              selectedConversation={selectedConversation}
-              onConversationSelect={handleConversationSelect}
-              onNewConversation={handleNewConversation}
-              onRefresh={loadConversations}
-            />
+          {/* Left Sidebar - Conversations and File Upload */}
+          <Box className="w-80 border-r border-gray-200 bg-gray-50 flex flex-col">
+            {/* File Upload Section */}
+            <Box className="p-4 border-b border-gray-200 bg-white">
+              <FileUpload
+                onFileUpload={handleFileUpload}
+                uploadedFiles={uploadedFiles}
+              />
+            </Box>
+            
+            {/* Conversations List */}
+            <Box className="flex-1">
+              <ConversationList
+                conversations={conversations}
+                selectedConversation={selectedConversation}
+                onConversationSelect={handleConversationSelect}
+                onNewConversation={handleNewConversation}
+                onRefresh={loadConversations}
+              />
+            </Box>
           </Box>
 
           {/* Main Chat Area */}
@@ -90,22 +140,11 @@ function App() {
             {showTicketManager ? (
               <TicketManager />
             ) : (
-              <>
-                {/* File Upload Section */}
-                <Box className="p-4 border-b border-gray-200 bg-white">
-                  <FileUpload
-                    onFileUpload={handleFileUpload}
-                    uploadedFiles={uploadedFiles}
-                  />
-                </Box>
-
-                {/* Chat Window */}
-                <ChatWindow
-                  conversation={selectedConversation}
-                  onConversationUpdate={loadConversations}
-                  uploadedFiles={uploadedFiles}
-                />
-              </>
+              <ChatWindow
+                conversation={selectedConversation}
+                onConversationUpdate={loadConversations}
+                uploadedFiles={uploadedFiles}
+              />
             )}
           </Box>
         </Box>
