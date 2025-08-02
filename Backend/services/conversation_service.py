@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import List, Optional, Dict
 
 class ConversationService:
-    def __init__(self, conversations_dir: str = "threads"):
+    def __init__(self, conversations_dir: str = "storage/threads"):
         self.conversations_dir = conversations_dir
         os.makedirs(conversations_dir, exist_ok=True)
 
