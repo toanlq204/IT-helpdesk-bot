@@ -1,0 +1,34 @@
+[
+  {
+    "role": "user",
+    "content": "How do I reset my company email password?"
+  },
+  {
+    "role": "assistant",
+    "content": "To reset your company email password, please visit the internal password reset portal at https://reset.company.com and follow the instructions. If you encounter any issues, contact IT support."
+  },
+  {
+    "role": "user",
+    "content": "My computer is running slow, what should I do?"
+  },
+  {
+    "role": "assistant",
+    "content": "Try restarting your computer and closing unused applications. If the issue persists, please run a virus scan and contact IT support for further assistance."
+  },
+  {
+    "role": "user",
+    "content": "How do I connect to the company VPN?"
+  },
+  {
+    "role": "assistant",
+    "content": "To connect to the company VPN, open the VPN client, enter your credentials, and click 'Connect'. Detailed instructions are available on the IT HelpDesk portal."
+  },
+  {
+    "role": "user",
+    "content": "I can't print from my workstation."
+  },
+  {
+    "role": "assistant",
+    "content": "Please check if the printer is powered on and connected to the network. Try reinstalling the printer driver. If the problem continues, contact IT support."
+  }
+] 
