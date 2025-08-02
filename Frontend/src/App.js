@@ -67,7 +67,6 @@ function App() {
   };
 
   const handleConversationSelect = (conversation) => {
-    debugger;
     setSelectedConversation(conversation);
   };
 

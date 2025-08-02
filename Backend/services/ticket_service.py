@@ -39,9 +39,9 @@ class TicketService:
             "id": str(uuid.uuid4()),
             "title": ticket_data.title,
             "description": ticket_data.description,
-            "priority": ticket_data.priority,
-            "status": ticket_data.status,
-            "assignee": ticket_data.assignee,
+            "priority": ticket_data.priority if ticket_data.priority is not None else "medium",
+            "status": ticket_data.status if ticket_data.status is not None else "open",
+            "assignee": ticket_data.assignee if ticket_data.assignee is not None else "",
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat()
         }

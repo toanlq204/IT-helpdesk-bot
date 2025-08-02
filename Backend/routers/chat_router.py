@@ -46,14 +46,14 @@ async def chat(
         assistant_message = chat_service.get_response(conversation['messages'])
         # Add user message to conversation
        
-        
-        # Add assistant message to conversation
-        conversation_service.add_message(
-            conversation,
-            role="assistant",
-            content=assistant_message
-        )
-        
+        if assistant_message is not None and isinstance(assistant_message, str):
+            # Add assistant message to conversation
+            conversation_service.add_message(
+                conversation,
+                role="assistant",
+                content=assistant_message
+            )
+            
         # Save conversation
         conversation_service.save_conversation(conversation)
         
