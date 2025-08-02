@@ -6,7 +6,7 @@ from typing import List, Optional
 from models.ticket_models import TicketCreate, TicketUpdate, Ticket
 
 class TicketService:
-    def __init__(self, data_dir: str = "tickets"):
+    def __init__(self, data_dir: str = "storage/tickets"):
         self.data_dir = data_dir
         self.tickets_file = os.path.join(data_dir, "tickets.json")
         os.makedirs(data_dir, exist_ok=True)
