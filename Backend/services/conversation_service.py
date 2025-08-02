@@ -19,10 +19,22 @@ class ConversationService:
                     try:
                         with open(file_path, 'r') as f:
                             conversation = json.load(f)
+                            
+                            # Find the first user message to use as title
+                            title = f"Chat {conversation['id'][:8]}"  # Default title
+                            if conversation.get("messages"):
+                                for message in conversation["messages"]:
+                                    if message.get("role") == "user" and message.get("content"):
+                                        # Use first 50 characters of the first user message as title
+                                        user_content = message["content"].strip()
+                                        if user_content:
+                                            title = user_content[:50] + ("..." if len(user_content) > 50 else "")
+                                            break
+                            
                             # Extract metadata for list view
                             conversation_summary = {
                                 "id": conversation["id"],
-                                "title": conversation.get("title", f"Chat {conversation['id'][:8]}"),
+                                "title": title,
                                 "lastMessage": conversation["messages"][-1]["content"][:100] if conversation["messages"] else "No messages",
                                 "updatedAt": conversation["updated_at"],
                                 "createdAt": conversation["created_at"]
