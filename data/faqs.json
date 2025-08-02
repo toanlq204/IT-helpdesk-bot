@@ -1,0 +1,74 @@
+{
+  "faqs": [
+    {
+      "id": 1,
+      "question": "How do I reset my password?",
+      "answer": "You can reset your password by using our automated system. Just provide your username and we'll send a temporary password to your registered email address.",
+      "category": "security",
+      "keywords": ["password", "reset", "login", "access", "forgot"]
+    },
+    {
+      "id": 2,
+      "question": "Email not syncing on mobile device",
+      "answer": "Check your internet connection, verify email settings (IMAP: 993, SMTP: 587), and try removing and re-adding your email account.",
+      "category": "software",
+      "keywords": ["email", "sync", "mobile", "imap", "smtp", "outlook"]
+    },
+    {
+      "id": 3,
+      "question": "VPN connection keeps dropping",
+      "answer": "Try switching VPN servers, check your internet stability, update VPN client software, and ensure your firewall isn't blocking the connection.",
+      "category": "network",
+      "keywords": ["vpn", "connection", "dropping", "disconnect", "remote"]
+    },
+    {
+      "id": 4,
+      "question": "Computer running slowly",
+      "answer": "Restart your computer, check available disk space (need >15% free), run disk cleanup, check for malware, and close unnecessary programs.",
+      "category": "hardware",
+      "keywords": ["slow", "performance", "lag", "freeze", "computer"]
+    },
+    {
+      "id": 5,
+      "question": "Printer not responding",
+      "answer": "Check printer power and connections, restart print spooler service, update printer drivers, and clear the print queue.",
+      "category": "hardware", 
+      "keywords": ["printer", "print", "not working", "offline", "driver"]
+    },
+    {
+      "id": 6,
+      "question": "Can't access shared network drive",
+      "answer": "Verify network connectivity, check your permissions with IT admin, try mapping the drive manually using UNC path, and ensure you're connected to company VPN if remote.",
+      "category": "network",
+      "keywords": ["network drive", "shared", "access", "permissions", "map"]
+    },
+    {
+      "id": 7,
+      "question": "Microsoft Teams audio/video issues",
+      "answer": "Check microphone and camera permissions, test audio/video in Teams settings, update Teams app, restart application, and verify device drivers are current.",
+      "category": "software",
+      "keywords": ["teams", "audio", "video", "microphone", "camera", "meeting"]
+    },
+    {
+      "id": 8,
+      "question": "Software installation requests",
+      "answer": "Submit a software request ticket with business justification. Include software name, version needed, business purpose, and urgency. IT will review and approve based on security and licensing policies.",
+      "category": "software",
+      "keywords": ["software", "install", "application", "program", "license"]
+    },
+    {
+      "id": 9,
+      "question": "Account locked out",
+      "answer": "Account lockouts occur after multiple failed login attempts. Wait 15 minutes for automatic unlock, or contact IT support for immediate unlock. Consider password reset if you're unsure of current password.",
+      "category": "security",
+      "keywords": ["locked", "account", "login", "failed", "attempts"]
+    },
+    {
+      "id": 10,
+      "question": "WiFi connectivity problems",
+      "answer": "Try forgetting and reconnecting to WiFi network, restart WiFi adapter, check for interference from other devices, and verify you're connecting to correct network with proper credentials.",
+      "category": "network",
+      "keywords": ["wifi", "wireless", "connectivity", "internet", "network"]
+    }
+  ]
+}

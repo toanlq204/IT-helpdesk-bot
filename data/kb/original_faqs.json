@@ -1,0 +1,475 @@
+{
+  "knowledge_base": {
+    "version": "2.0",
+    "last_updated": "2025-08-02",
+    "categories": ["security", "software", "hardware", "network", "mobile", "database", "backup", "compliance", "maintenance", "av_equipment", "storage", "general", "cloud", "performance", "telephony", "printing"],
+    "language_support": ["en", "es", "fr", "de", "pt", "zh", "ja"],
+    "total_articles": 35,
+    "search_enabled": true,
+    "auto_suggest": true
+  },
+  "faqs": [
+    {
+      "id": 1,
+      "question": "How do I reset my password?",
+      "answer": "To reset your password:\n1. Contact IT support or use the self-service portal\n2. Provide your username for verification\n3. A temporary password will be sent to your registered email\n4. Login with the temporary password and set a new one\n5. Your account will be automatically unlocked",
+      "category": "security",
+      "priority": "high",
+      "keywords": ["password", "reset", "login", "access", "forgot", "unlock", "account"],
+      "related_tickets": ["20250802001"],
+      "resolution_time_minutes": 5
+    },
+    {
+      "id": 2,
+      "question": "Account locked after multiple failed login attempts",
+      "answer": "Account lockouts are automatic security measures:\n1. Wait 15 minutes for automatic unlock\n2. Or contact IT support for immediate assistance\n3. Consider password reset if you're unsure of your password\n4. Check caps lock and keyboard layout\n5. Verify you're using the correct username format",
+      "category": "security",
+      "priority": "medium",
+      "keywords": ["locked", "account", "failed", "attempts", "lockout", "security"],
+      "related_tickets": ["20250802001"],
+      "resolution_time_minutes": 2
+    },
+    {
+      "id": 3,
+      "question": "Email not syncing on mobile device",
+      "answer": "To fix email synchronization issues:\n1. Check your internet connection\n2. Verify email settings: IMAP (993), SMTP (587)\n3. Remove and re-add your email account\n4. Check server settings with IT if problem persists\n5. Ensure you're connected to company WiFi or VPN",
+      "category": "software",
+      "priority": "high",
+      "keywords": ["email", "sync", "mobile", "outlook", "imap", "smtp", "synchronization"],
+      "related_tickets": ["20250802002"],
+      "resolution_time_minutes": 15
+    },
+    {
+      "id": 4,
+      "question": "Printer not working or offline",
+      "answer": "Troubleshoot printer issues:\n1. Check printer power and cable connections\n2. Restart the print spooler service\n3. Update or reinstall printer drivers\n4. Clear the print queue\n5. Restart both computer and printer\n6. Check network connectivity for network printers",
+      "category": "hardware",
+      "priority": "medium",
+      "keywords": ["printer", "print", "offline", "driver", "spooler", "queue", "not working"],
+      "related_tickets": ["20250801015"],
+      "resolution_time_minutes": 20
+    },
+    {
+      "id": 5,
+      "question": "VPN connection keeps dropping",
+      "answer": "To resolve VPN connectivity issues:\n1. Try switching to different VPN servers\n2. Check your internet connection stability\n3. Update VPN client software\n4. Configure firewall to allow VPN traffic\n5. Restart network adapter\n6. Contact IT if problem persists during work hours",
+      "category": "network",
+      "priority": "high",
+      "keywords": ["vpn", "connection", "dropping", "disconnect", "remote", "network"],
+      "related_tickets": ["20250801020"],
+      "resolution_time_minutes": 10
+    },
+    {
+      "id": 6,
+      "question": "Computer running slowly",
+      "answer": "To improve computer performance:\n1. Restart your computer\n2. Check available disk space (ensure >15% free)\n3. Run disk cleanup utility\n4. Close unnecessary programs and browser tabs\n5. Check for malware with antivirus scan\n6. Consider RAM upgrade if problem persists",
+      "category": "hardware",
+      "priority": "medium",
+      "keywords": ["slow", "performance", "lag", "freeze", "computer", "speed"],
+      "related_tickets": ["20250728018"],
+      "resolution_time_minutes": 30
+    },
+    {
+      "id": 7,
+      "question": "Can't access shared network drive",
+      "answer": "To resolve network drive access issues:\n1. Verify network connectivity\n2. Check your permissions with IT administrator\n3. Try mapping the drive manually using UNC path\n4. Ensure you're connected to company VPN if working remotely\n5. Restart Windows Explorer\n6. Contact IT for permission updates if needed",
+      "category": "network",
+      "priority": "high",
+      "keywords": ["network drive", "shared", "access", "permissions", "map", "folder"],
+      "related_tickets": ["20250729005"],
+      "resolution_time_minutes": 10
+    },
+    {
+      "id": 8,
+      "question": "Microsoft Teams audio/video issues",
+      "answer": "To fix Teams audio/video problems:\n1. Check microphone and camera permissions in Teams\n2. Test audio/video in Teams settings\n3. Update Teams application\n4. Restart Teams application\n5. Verify device drivers are current\n6. Check Windows privacy settings for microphone/camera access",
+      "category": "software",
+      "priority": "medium",
+      "keywords": ["teams", "audio", "video", "microphone", "camera", "meeting", "call"],
+      "related_tickets": ["20250730012"],
+      "resolution_time_minutes": 15
+    },
+    {
+      "id": 9,
+      "question": "How to request software installation",
+      "answer": "To request new software installation:\n1. Submit a software request ticket\n2. Include business justification\n3. Specify software name and version needed\n4. Explain business purpose and urgency\n5. IT will review based on security and licensing policies\n6. Allow 1-3 business days for approval and installation",
+      "category": "software",
+      "priority": "low",
+      "keywords": ["software", "install", "application", "program", "license", "request"],
+      "related_tickets": ["20250731008"],
+      "resolution_time_minutes": 2880
+    },
+    {
+      "id": 10,
+      "question": "WiFi connectivity problems",
+      "answer": "To resolve WiFi connection issues:\n1. Forget and reconnect to the WiFi network\n2. Restart WiFi adapter in Device Manager\n3. Check for interference from other devices\n4. Verify you're connecting to the correct network\n5. Ensure you have the proper credentials\n6. Update network adapter drivers if needed",
+      "category": "network",
+      "priority": "medium",
+      "keywords": ["wifi", "wireless", "connectivity", "internet", "network", "connection"],
+      "related_tickets": [],
+      "resolution_time_minutes": 10
+    },
+    {
+      "id": 11,
+      "question": "SSL certificate security warnings",
+      "answer": "When encountering SSL certificate warnings:\n1. Do not ignore security warnings\n2. Report the issue to IT security immediately\n3. Avoid entering sensitive information\n4. Wait for IT to resolve certificate issues\n5. Use alternative access methods if available\n6. IT will install updated certificates as needed",
+      "category": "security",
+      "priority": "high",
+      "keywords": ["ssl", "certificate", "security", "warning", "https", "expired"],
+      "related_tickets": ["20250726010"],
+      "resolution_time_minutes": 240
+    },
+    {
+      "id": 12,
+      "question": "Mobile device setup for new employees",
+      "answer": "For new employee mobile device setup:\n1. Contact IT support to request device configuration\n2. Provide employee information and department\n3. IT will configure device with MDM profile\n4. Email and company apps will be installed\n5. Security policies will be applied automatically\n6. Training on device usage will be provided",
+      "category": "mobile",
+      "priority": "low",
+      "keywords": ["mobile", "device", "setup", "new employee", "iphone", "android", "mdm"],
+      "related_tickets": ["20250725015"],
+      "resolution_time_minutes": 240
+    },
+    {
+      "id": 13,
+      "question": "Database connection timeout errors",
+      "answer": "For database connectivity issues:\n1. Check network connectivity to database server\n2. Verify database server status\n3. Review connection string settings\n4. Contact database administrator for server issues\n5. Critical issues are escalated to senior DBA\n6. Monitor performance and connection logs",
+      "category": "database",
+      "priority": "critical",
+      "keywords": ["database", "connection", "timeout", "server", "sql", "connectivity"],
+      "related_tickets": ["20250727003"],
+      "resolution_time_minutes": 60
+    },
+    {
+      "id": 14,
+      "question": "Backup system failures",
+      "answer": "When backup systems fail:\n1. Immediately report backup failures to IT\n2. IT will investigate storage hardware\n3. Alternative backup methods may be implemented\n4. Data restoration procedures will be tested\n5. Critical for data protection compliance\n6. High priority resolution within 24 hours",
+      "category": "backup",
+      "priority": "critical",
+      "keywords": ["backup", "failure", "storage", "data protection", "restore"],
+      "related_tickets": ["20250724007"],
+      "resolution_time_minutes": 480
+    },
+    {
+      "id": 15,
+      "question": "Video conferencing room audio issues",
+      "answer": "To fix meeting room audio problems:\n1. Check all cable connections\n2. Restart audio equipment\n3. Adjust microphone positioning\n4. Enable echo cancellation settings\n5. Test audio levels before meetings\n6. Contact AV support for persistent issues",
+      "category": "av_equipment",
+      "priority": "medium",
+      "keywords": ["audio", "video", "conference", "meeting room", "echo", "microphone"],
+      "related_tickets": ["20250723012"],
+      "resolution_time_minutes": 30
+    },
+    {
+      "id": 16,
+      "question": "Software license compliance audit",
+      "answer": "During software license audits:\n1. Cooperate with compliance team requests\n2. Provide access for software inventory scans\n3. Report any unlicensed software immediately\n4. Review installed software on your devices\n5. Automated tools will scan for compliance\n6. Quarterly audits ensure legal compliance",
+      "category": "compliance",
+      "priority": "medium",
+      "keywords": ["license", "compliance", "audit", "software", "legal", "inventory"],
+      "related_tickets": ["20250722008"],
+      "resolution_time_minutes": 60
+    },
+    {
+      "id": 17,
+      "question": "Scheduled server maintenance notifications",
+      "answer": "For server maintenance windows:\n1. Review maintenance notifications carefully\n2. Plan work around scheduled downtime\n3. Save work before maintenance begins\n4. Expect temporary service interruptions\n5. Maintenance typically occurs during off-hours\n6. Contact IT if urgent access is needed during maintenance",
+      "category": "maintenance",
+      "priority": "low",
+      "keywords": ["maintenance", "server", "downtime", "scheduled", "notification"],
+      "related_tickets": ["20250721006"],
+      "resolution_time_minutes": 5
+    },
+    {
+      "id": 18,
+      "question": "Phishing email and security threats",
+      "answer": "When you receive suspicious emails:\n1. Do not click links or download attachments\n2. Report phishing emails to IT security immediately\n3. Forward suspicious emails to security team\n4. Do not provide personal or login information\n5. IT will quarantine threats and block senders\n6. Security awareness training will be provided",
+      "category": "security",
+      "priority": "high",
+      "keywords": ["phishing", "email", "security", "threat", "suspicious", "malware"],
+      "related_tickets": ["20250720004"],
+      "resolution_time_minutes": 30
+    },
+    {
+      "id": 19,
+      "question": "Cloud storage quota exceeded",
+      "answer": "When storage quota is exceeded:\n1. Review and delete unnecessary files\n2. Archive old files to cold storage\n3. Request quota increase with business justification\n4. Consider data cleanup policies\n5. IT can increase limits based on need\n6. Monitor usage to prevent future issues",
+      "category": "storage",
+      "priority": "medium",
+      "keywords": ["storage", "quota", "cloud", "disk space", "limit", "archive"],
+      "related_tickets": ["20250719011"],
+      "resolution_time_minutes": 60
+    },
+    {
+      "id": 20,
+      "question": "How to create and track support tickets",
+      "answer": "To use the helpdesk system effectively:\n1. Use the chat interface to describe your issue\n2. Provide detailed information about the problem\n3. Include error messages and steps to reproduce\n4. Tickets are automatically created and assigned\n5. Track ticket status through the system\n6. Respond promptly to IT follow-up questions",
+      "category": "general",
+      "priority": "low",
+      "keywords": ["ticket", "support", "helpdesk", "create", "track", "system"],
+      "related_tickets": [],
+      "resolution_time_minutes": 5
+    },
+    {
+      "id": 21,
+      "question": "Blue Screen of Death (BSOD) errors",
+      "answer": "When encountering BSOD errors:\n1. Note the error code and any displayed message\n2. Restart the computer safely\n3. Check for recent hardware or software changes\n4. Run Windows Memory Diagnostic tool\n5. Update device drivers, especially graphics and storage\n6. Contact IT support with error details if recurring",
+      "category": "hardware",
+      "priority": "high",
+      "keywords": ["bsod", "blue screen", "crash", "system failure", "error code", "restart"],
+      "related_tickets": ["20250802142609"],
+      "resolution_time_minutes": 45
+    },
+    {
+      "id": 22,
+      "question": "Multi-factor authentication (MFA) setup",
+      "answer": "To set up multi-factor authentication:\n1. Download Microsoft Authenticator app\n2. Scan QR code provided by IT or visit aka.ms/mfasetup\n3. Enter verification code to complete setup\n4. Save backup codes in secure location\n5. Test MFA login before logging out\n6. Contact IT if you lose access to authenticator device",
+      "category": "security",
+      "priority": "high",
+      "keywords": ["mfa", "multi-factor", "authentication", "2fa", "authenticator", "security"],
+      "related_tickets": [],
+      "resolution_time_minutes": 15
+    },
+    {
+      "id": 23,
+      "question": "File corruption and data recovery",
+      "answer": "For corrupted files and data recovery:\n1. Do not save or modify corrupted files\n2. Check recent backups for clean copies\n3. Use Windows File History if enabled\n4. Try opening files in different applications\n5. Contact IT immediately for critical data\n6. Data recovery tools may be available for important files",
+      "category": "storage",
+      "priority": "high",
+      "keywords": ["corruption", "data recovery", "backup", "file", "restore", "lost data"],
+      "related_tickets": [],
+      "resolution_time_minutes": 120
+    },
+    {
+      "id": 24,
+      "question": "Microsoft Office applications crashing",
+      "answer": "To resolve Office application crashes:\n1. Update Office to the latest version\n2. Run Office repair tool (Quick Repair first)\n3. Start Office in Safe Mode to identify add-in conflicts\n4. Disable unnecessary add-ins\n5. Check for Windows updates\n6. Contact IT if crashes persist after troubleshooting",
+      "category": "software",
+      "priority": "medium",
+      "keywords": ["office", "crash", "word", "excel", "powerpoint", "outlook", "repair"],
+      "related_tickets": [],
+      "resolution_time_minutes": 30
+    },
+    {
+      "id": 25,
+      "question": "Remote desktop connection issues",
+      "answer": "Troubleshooting remote desktop problems:\n1. Verify target computer is powered on and connected\n2. Check Remote Desktop is enabled on target machine\n3. Ensure you have proper permissions\n4. Verify network connectivity and VPN connection\n5. Try connecting using IP address instead of computer name\n6. Contact IT for firewall or network configuration issues",
+      "category": "network",
+      "priority": "medium",
+      "keywords": ["remote desktop", "rdp", "connection", "remote access", "network"],
+      "related_tickets": [],
+      "resolution_time_minutes": 20
+    },
+    {
+      "id": 26,
+      "question": "Keyboard and mouse not responding",
+      "answer": "For unresponsive input devices:\n1. Check USB connections and try different ports\n2. Replace batteries in wireless devices\n3. Restart computer if devices are completely unresponsive\n4. Try devices on another computer to test functionality\n5. Update or reinstall device drivers\n6. Request replacement if hardware is defective",
+      "category": "hardware",
+      "priority": "medium",
+      "keywords": ["keyboard", "mouse", "input", "usb", "wireless", "not responding"],
+      "related_tickets": ["20250802151538"],
+      "resolution_time_minutes": 15
+    },
+    {
+      "id": 27,
+      "question": "Cloud services and OneDrive sync issues",
+      "answer": "To resolve OneDrive sync problems:\n1. Check OneDrive status icon for sync errors\n2. Pause and resume syncing\n3. Check available storage space in OneDrive\n4. Restart OneDrive application\n5. Reset OneDrive if sync completely fails\n6. Contact IT for account permission or configuration issues",
+      "category": "cloud",
+      "priority": "medium",
+      "keywords": ["onedrive", "cloud", "sync", "sharepoint", "storage", "upload"],
+      "related_tickets": [],
+      "resolution_time_minutes": 25
+    },
+    {
+      "id": 28,
+      "question": "Browser issues and web application problems",
+      "answer": "For browser and web application issues:\n1. Clear browser cache and cookies\n2. Disable browser extensions temporarily\n3. Try incognito/private browsing mode\n4. Update browser to latest version\n5. Try accessing site from different browser\n6. Contact IT if specific company websites don't work",
+      "category": "software",
+      "priority": "low",
+      "keywords": ["browser", "chrome", "edge", "firefox", "cache", "cookies", "web"],
+      "related_tickets": [],
+      "resolution_time_minutes": 10
+    },
+    {
+      "id": 29,
+      "question": "USB device not recognized",
+      "answer": "When USB devices aren't recognized:\n1. Try different USB ports (USB 3.0 and 2.0)\n2. Test device on another computer\n3. Update USB device drivers\n4. Check Device Manager for driver conflicts\n5. Restart computer with device disconnected, then reconnect\n6. Contact IT if device needs special drivers or software",
+      "category": "hardware",
+      "priority": "low",
+      "keywords": ["usb", "device", "recognized", "driver", "port", "external"],
+      "related_tickets": [],
+      "resolution_time_minutes": 15
+    },
+    {
+      "id": 30,
+      "question": "Screen display and monitor issues",
+      "answer": "For display and monitor problems:\n1. Check monitor power and cable connections\n2. Try different video cables (HDMI, VGA, DisplayPort)\n3. Adjust display resolution and scaling settings\n4. Update graphics drivers\n5. Test with external monitor if using laptop\n6. Contact IT for hardware replacement if monitor fails",
+      "category": "hardware",
+      "priority": "medium",
+      "keywords": ["monitor", "display", "screen", "resolution", "graphics", "video"],
+      "related_tickets": [],
+      "resolution_time_minutes": 20
+    },
+    {
+      "id": 31,
+      "question": "Company VoIP phone system issues",
+      "answer": "For VoIP phone problems:\n1. Check network connection and cable\n2. Restart phone by unplugging for 30 seconds\n3. Test other phones in area for network issues\n4. Check phone display for error messages\n5. Verify extension and voicemail settings\n6. Contact IT or telephony support for system issues",
+      "category": "telephony",
+      "priority": "medium",
+      "keywords": ["voip", "phone", "extension", "voicemail", "calling", "telephony"],
+      "related_tickets": [],
+      "resolution_time_minutes": 15
+    },
+    {
+      "id": 32,
+      "question": "Antivirus alerts and malware detection",
+      "answer": "When antivirus detects threats:\n1. Do not ignore antivirus warnings\n2. Allow antivirus to quarantine detected threats\n3. Run full system scan immediately\n4. Disconnect from network if multiple threats detected\n5. Change passwords after cleaning infections\n6. Report security incidents to IT security team",
+      "category": "security",
+      "priority": "critical",
+      "keywords": ["antivirus", "malware", "virus", "threat", "security", "quarantine"],
+      "related_tickets": [],
+      "resolution_time_minutes": 60
+    },
+    {
+      "id": 33,
+      "question": "Large file transfer and sharing",
+      "answer": "For transferring large files:\n1. Use company-approved cloud storage (OneDrive, SharePoint)\n2. Compress files before sending via email\n3. Use file sharing services approved by IT\n4. Split large files into smaller chunks if necessary\n5. For very large transfers, request IT assistance\n6. Never use unauthorized file sharing websites",
+      "category": "storage",
+      "priority": "low",
+      "keywords": ["file transfer", "large files", "sharing", "upload", "download", "cloud"],
+      "related_tickets": [],
+      "resolution_time_minutes": 10
+    },
+    {
+      "id": 34,
+      "question": "Laptop battery and power issues",
+      "answer": "For laptop power and battery problems:\n1. Check power adapter connections and LED indicators\n2. Try different power outlets\n3. Remove and reseat battery if removable\n4. Check Windows power settings and power plan\n5. Run Windows battery report (powercfg /batteryreport)\n6. Contact IT for battery replacement if health is poor",
+      "category": "hardware",
+      "priority": "medium",
+      "keywords": ["laptop", "battery", "power", "charging", "adapter", "power plan"],
+      "related_tickets": [],
+      "resolution_time_minutes": 25
+    },
+    {
+      "id": 35,
+      "question": "Software updates and patch management",
+      "answer": "For software updates and patches:\n1. Install Windows updates during scheduled maintenance\n2. Allow automatic updates for security patches\n3. Update applications through official channels only\n4. Restart computer after major updates\n5. Report any issues after updates to IT\n6. Do not delay critical security updates",
+      "category": "maintenance",
+      "priority": "medium",
+      "keywords": ["updates", "patches", "windows update", "security", "maintenance"],
+      "related_tickets": [],
+      "resolution_time_minutes": 30
+    }
+  ],
+  "troubleshooting_guides": {
+    "network_connectivity": {
+      "title": "Network Connectivity Troubleshooting",
+      "steps": [
+        "Check physical connections (Ethernet cable, WiFi indicator)",
+        "Restart network adapter (disable/enable in Device Manager)",
+        "Flush DNS cache (ipconfig /flushdns in Command Prompt)",
+        "Reset TCP/IP stack (netsh int ip reset)",
+        "Check proxy settings and firewall configuration",
+        "Contact IT if issues persist"
+      ],
+      "estimated_time": 20
+    },
+    "performance_optimization": {
+      "title": "Computer Performance Optimization",
+      "steps": [
+        "Check Task Manager for high CPU/Memory usage",
+        "Disable startup programs you don't need",
+        "Run Disk Cleanup and defragmentation",
+        "Update drivers and Windows",
+        "Check for malware with full system scan",
+        "Consider hardware upgrade if consistently slow"
+      ],
+      "estimated_time": 45
+    },
+    "email_configuration": {
+      "title": "Email Client Configuration",
+      "steps": [
+        "Verify email server settings (IMAP: 993, SMTP: 587)",
+        "Check authentication method (Modern Auth recommended)",
+        "Test with different email client or webmail",
+        "Clear email client cache and rebuild mailbox",
+        "Check firewall and antivirus email scanning",
+        "Contact IT for server-side configuration"
+      ],
+      "estimated_time": 30
+    }
+  },
+  "quick_solutions": {
+    "password_reset": "Contact IT support with your username for immediate password reset",
+    "printer_offline": "Check power, cables, and restart both printer and computer",
+    "vpn_issues": "Try different servers, check internet, and restart VPN client",
+    "slow_computer": "Restart computer, free up disk space, and close unnecessary programs",
+    "email_sync": "Check internet, verify settings (IMAP: 993, SMTP: 587), re-add account",
+    "wifi_problems": "Forget and reconnect to WiFi, restart adapter, check credentials",
+    "blue_screen": "Note error code, restart computer, update drivers, contact IT if recurring",
+    "office_crash": "Update Office, run repair tool, start in Safe Mode, disable add-ins",
+    "usb_not_working": "Try different ports, test on another computer, update drivers"
+  },
+  "emergency_contacts": {
+    "it_helpdesk": {
+      "phone": "+1-555-0199",
+      "email": "helpdesk@company.com",
+      "hours": "24/7 for critical issues"
+    },
+    "security_team": {
+      "phone": "+1-555-0100",
+      "email": "security@company.com",
+      "hours": "24/7 for security incidents"
+    },
+    "network_operations": {
+      "phone": "+1-555-0101",
+      "email": "netops@company.com",
+      "hours": "Monday-Friday 8AM-6PM"
+    }
+  },
+  "system_requirements": {
+    "minimum_specs": {
+      "ram": "8GB",
+      "storage": "256GB SSD",
+      "os": "Windows 10/11 or macOS 10.15+",
+      "browser": "Chrome 90+, Edge 90+, Firefox 88+"
+    },
+    "recommended_specs": {
+      "ram": "16GB",
+      "storage": "512GB SSD",
+      "os": "Windows 11 or macOS 12+",
+      "browser": "Latest version"
+    }
+  },
+  "security_guidelines": {
+    "password_policy": {
+      "minimum_length": 12,
+      "complexity": "Upper, lower, numbers, special characters",
+      "expiry_days": 90,
+      "history": "Cannot reuse last 12 passwords"
+    },
+    "data_classification": {
+      "public": "No restrictions",
+      "internal": "Company employees only",
+      "confidential": "Need-to-know basis",
+      "restricted": "Requires special authorization"
+    },
+    "incident_response": [
+      "Immediately disconnect affected systems",
+      "Contact IT security team",
+      "Document all details",
+      "Do not attempt to fix security issues yourself",
+      "Preserve evidence for investigation"
+    ]
+  },
+  "escalation_guidelines": {
+    "critical": "Immediate escalation to senior staff",
+    "high": "Response within 4 hours",
+    "medium": "Response within 24 hours", 
+    "low": "Response within 48 hours"
+  },
+  "feedback_collection": {
+    "satisfaction_survey": "Rate your support experience after ticket resolution",
+    "improvement_suggestions": "Submit ideas for improving IT services",
+    "knowledge_base_feedback": "Help us improve our knowledge base articles"
+  }
+}

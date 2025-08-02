@@ -1,0 +1,57 @@
+{
+  "knowledge_base": {
+    "version": "test-1.0",
+    "last_updated": "2025-08-02",
+    "categories": ["testing", "demo"],
+    "language_support": ["en"],
+    "total_articles": 3
+  },
+  "faqs": [
+    {
+      "id": 36,
+      "question": "How to test the new knowledge base upload feature?",
+      "answer": "To test the knowledge base upload:\n1. Create a JSON file with knowledge base structure\n2. Go to Admin Panel in the web app\n3. Upload the file using the Knowledge Base Management section\n4. The system will automatically merge it with existing knowledge\n5. Test by asking questions covered in the uploaded content",
+      "category": "testing",
+      "priority": "low",
+      "keywords": ["test", "upload", "knowledge base", "admin", "file"],
+      "resolution_time_minutes": 5
+    },
+    {
+      "id": 37,
+      "question": "What file formats are supported for knowledge base upload?",
+      "answer": "Knowledge base uploads support:\n1. JSON files (.json extension)\n2. Structure must include 'faqs' array for FAQ content\n3. Optional sections: troubleshooting_guides, quick_solutions, emergency_contacts\n4. Files are automatically backed up before replacement\n5. Multiple files can be uploaded and will be merged automatically",
+      "category": "testing",
+      "priority": "medium",
+      "keywords": ["file format", "json", "upload", "structure", "backup"],
+      "resolution_time_minutes": 3
+    },
+    {
+      "id": 38,
+      "question": "How does the system handle duplicate knowledge base entries?",
+      "answer": "The system handles duplicates intelligently:\n1. FAQs with the same ID are deduplicated automatically\n2. Newer uploads take priority over older content\n3. Different sections (troubleshooting_guides, quick_solutions) are merged\n4. Backup files are created automatically before updates\n5. Knowledge base is reloaded instantly after successful upload",
+      "category": "testing",
+      "priority": "medium",
+      "keywords": ["duplicate", "merge", "backup", "reload", "priority"],
+      "resolution_time_minutes": 10
+    }
+  ],
+  "quick_solutions": {
+    "knowledge_upload": "Go to Admin Panel → Knowledge Base Management → Upload JSON file",
+    "test_knowledge": "Upload test file, then ask questions covered in the content to verify",
+    "backup_files": "All uploads automatically create backup files with timestamps"
+  },
+  "troubleshooting_guides": {
+    "upload_issues": {
+      "title": "Knowledge Base Upload Troubleshooting",
+      "steps": [
+        "Verify JSON file is valid (use online JSON validator)",
+        "Check file has proper structure with 'faqs' array",
+        "Ensure admin permissions are active",
+        "Try refreshing the page if upload fails",
+        "Check browser console for error messages",
+        "Contact system administrator if issues persist"
+      ],
+      "estimated_time": 15
+    }
+  }
+}
