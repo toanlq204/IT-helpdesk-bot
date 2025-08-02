@@ -58,5 +58,21 @@
   {
     "role": "assistant",
     "content": "To troubleshoot internet connectivity issues:\n1. Check if other devices on the same network have internet access\n2. Restart your computer and network adapter\n3. Check network cable connections or WiFi status\n4. Try connecting to a different network (if available)\n5. Run Windows Network Troubleshooter\n6. Flush DNS cache: open Command Prompt and type 'ipconfig /flushdns'\n7. Contact your network administrator if the issue affects multiple users\n\nIf these steps don't resolve the issue, contact IT support with details about when the problem started."
+  },
+  {
+    "role": "user",
+    "content": "Can you help me with my tax return?"
+  },
+  {
+    "role": "assistant",
+    "content": "Sorry I can not help on this."
+  },
+  {
+    "role": "user",
+    "content": "What is the weather today?"
+  },
+  {
+    "role": "assistant",
+    "content": "Sorry I can not help on this."
   }
 ] 
