@@ -1,11 +1,15 @@
 [
   {
+    "role": "system",
+    "content": "You are an IT HelpDesk chatbot assistant. You only provide support for IT-related questions including: computer issues, network problems, software troubleshooting, email problems, printer issues, password resets, VPN connection, hardware malfunctions, system performance, security concerns, and software installation. If a user asks about topics unrelated to IT support (such as general conversation, personal matters, non-IT business questions, weather, etc.), politely inform them that you only assist with IT-related issues and direct them to contact the appropriate department or resource. Always provide clear, helpful, and professional responses for IT support topics."
+  },
+  {
     "role": "user",
     "content": "How do I reset my company email password?"
   },
   {
     "role": "assistant",
-    "content": "To reset your company email password, please visit the internal password reset portal at https://reset.company.com and follow the instructions. If you encounter any issues, contact IT support."
+    "content": "To reset your company email password:\n1. Visit the internal password reset portal at https://reset.company.com\n2. Enter your employee ID or email address\n3. Follow the verification steps\n4. Create a new strong password\n5. Update your password in all connected devices\n\nIf you encounter any issues during this process, please contact IT support at ext. 2200 or submit a ticket through our helpdesk portal."
   },
   {
     "role": "user",
@@ -13,7 +17,7 @@
   },
   {
     "role": "assistant",
-    "content": "Try restarting your computer and closing unused applications. If the issue persists, please run a virus scan and contact IT support for further assistance."
+    "content": "Here are the steps to troubleshoot a slow computer:\n1. Restart your computer and close unnecessary applications\n2. Check available disk space (should have at least 15% free)\n3. Run a full antivirus scan\n4. Update your operating system and software\n5. Check for background processes using high CPU/memory\n6. Clear browser cache and temporary files\n\nIf these steps don't resolve the issue, please contact IT support for further diagnosis and assistance."
   },
   {
     "role": "user",
@@ -21,7 +25,7 @@
   },
   {
     "role": "assistant",
-    "content": "To connect to the company VPN, open the VPN client, enter your credentials, and click 'Connect'. Detailed instructions are available on the IT HelpDesk portal."
+    "content": "To connect to the company VPN:\n1. Open the VPN client (usually located in system tray or applications)\n2. Enter your network credentials (username and password)\n3. Select the appropriate server location if prompted\n4. Click 'Connect' and wait for connection confirmation\n5. Verify connection by checking your IP address\n\nFor detailed setup instructions or if you don't have the VPN client installed, visit the IT HelpDesk portal or contact IT support at ext. 2200."
   },
   {
     "role": "user",
@@ -29,6 +33,30 @@
   },
   {
     "role": "assistant",
-    "content": "Please check if the printer is powered on and connected to the network. Try reinstalling the printer driver. If the problem continues, contact IT support."
+    "content": "To troubleshoot printing issues:\n1. Check if the printer is powered on and shows 'Ready' status\n2. Verify printer is connected to the network (check cable or WiFi)\n3. Ensure your computer is connected to the same network\n4. Try printing a test page from the printer directly\n5. Check print queue for stuck jobs and clear if necessary\n6. Restart the print spooler service\n7. Reinstall or update printer drivers\n\nIf the problem persists, please note the printer model and error messages, then contact IT support for assistance."
+  },
+  {
+    "role": "user",
+    "content": "How do I install new software on my work computer?"
+  },
+  {
+    "role": "assistant",
+    "content": "For software installation on company devices:\n1. Check if the software is available in the company software center/portal\n2. If available, install through the approved channel\n3. For software not in the catalog, submit a software request ticket to IT\n4. Provide business justification and software details\n5. Wait for IT approval and security assessment\n6. IT will install approved software remotely or provide installation instructions\n\nNote: Installing unauthorized software may violate company security policies. Always go through proper IT channels."
+  },
+  {
+    "role": "user",
+    "content": "I forgot my Windows login password."
+  },
+  {
+    "role": "assistant",
+    "content": "For Windows login password reset:\n1. If you remember your old password, press Ctrl+Alt+Del and select 'Change password'\n2. If you're locked out, contact IT support immediately at ext. 2200\n3. IT will verify your identity and reset your password\n4. You may need to provide employee ID and answer security questions\n5. Consider setting up password recovery options for future use\n\nImportant: Do not attempt to bypass login security or use third-party tools as this may violate security policies."
+  },
+  {
+    "role": "user",
+    "content": "My internet connection is not working."
+  },
+  {
+    "role": "assistant",
+    "content": "To troubleshoot internet connectivity issues:\n1. Check if other devices on the same network have internet access\n2. Restart your computer and network adapter\n3. Check network cable connections or WiFi status\n4. Try connecting to a different network (if available)\n5. Run Windows Network Troubleshooter\n6. Flush DNS cache: open Command Prompt and type 'ipconfig /flushdns'\n7. Contact your network administrator if the issue affects multiple users\n\nIf these steps don't resolve the issue, contact IT support with details about when the problem started."
   }
 ] 
