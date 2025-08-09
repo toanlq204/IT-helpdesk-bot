@@ -1,7 +1,176 @@
-Frontend/node_modules
+# IT-helpdesk-bot Project .gitignore
+
+# Python (Backend)
+Backend/__pycache__/
+Backend/**/__pycache__/
+Backend/**/**/__pycache__/
 Backend/**/*/__pycache__
-Backend/__pycache__
+Backend/*.py[cod]
+Backend/*$py.class
+Backend/*.so
+Backend/.Python
+Backend/build/
+Backend/develop-eggs/
+Backend/dist/
+Backend/downloads/
+Backend/eggs/
+Backend/.eggs/
+Backend/lib/
+Backend/lib64/
+Backend/parts/
+Backend/sdist/
+Backend/var/
+Backend/wheels/
+Backend/*.egg-info/
+Backend/.installed.cfg
+Backend/*.egg
+
+# Virtual environments
+Backend/.env
 Backend/.venv
-Backend/venv
-Backend/storage
+Backend/env/
+Backend/venv/
+Backend/ENV/
+Backend/env.bak/
+Backend/venv.bak/
+Backend/.venv/
+.venv/
+venv/
+
+# ChromaDB and database files
+Backend/chroma_db/
+chroma_db/
+**/chroma_db/
+Backend/*.db
+Backend/*.sqlite
+Backend/*.sqlite3
+*.chroma
+*.index
+*.parquet
+**/chroma.sqlite3
+**/index_metadata.pickle
+
+# Storage and data folders
+Backend/storage/
+Backend/logs/
+Backend/conversations/
+Backend/uploads/
+Backend/tickets/
+Backend/threads/
+Backend/data/mock_*.json
+
+# Node.js (Frontend)
+Frontend/node_modules/
+Frontend/npm-debug.log*
+Frontend/yarn-debug.log*
+Frontend/yarn-error.log*
+Frontend/.npm
+Frontend/.yarn-integrity
+
+# React build
+Frontend/build/
+Frontend/dist/
+
+# Environment variables (all levels)
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.development
+.env.production
+Backend/.env*
+Frontend/.env*
+
+# API Keys and secrets
+config.json
+secrets.json
+credentials.json
+*.key
+*.pem
+*.crt
+Backend/config.json
+Backend/secrets.json
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+Backend/*.log
+Backend/logs/
+Frontend/*.log
+
+# Test coverage
+coverage/
+.nyc_output
+.coverage
+htmlcov/
+.pytest_cache/
+Backend/.pytest_cache/
+Backend/htmlcov/
+Backend/.coverage
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+Backend/temp/
+Backend/tmp/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Package files
+*.tgz
+*.tar.gz
+*.zip
+*.rar
+
+# Cache directories
+.cache/
+cache/
+Backend/.cache/
+Frontend/.cache/
+.eslintcache
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Build outputs
+.next
+.nuxt
+.out
+.storybook-out
+
+# Project specific
+Backend/test_*.py
+Backend/*_test.py
+Backend/comprehensive_test_suite.py
+Backend/fixed_comprehensive_test.py
