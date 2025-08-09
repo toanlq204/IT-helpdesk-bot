@@ -38,8 +38,8 @@ const FileUpload = ({ onFileUpload, uploadedFiles }) => {
         
         const result = await fileService.uploadFile(file);
         uploadedFileResults.push({
-          id: result.file_id,
-          filename: result.filename,
+          id: result.file_info.file_id,
+          filename: result.file_info.filename,
           size: file.size,
           type: file.type
         });
