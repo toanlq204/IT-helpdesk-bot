@@ -3,35 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
 from routers import ticket_router, conversation_router, chat_router
-import chromadb
-from chromadb.config import Settings
 
 load_dotenv()
-
-# Environment variables
-CHROMA_PERSIST_DIRECTORY = os.getenv("CHROMA_PERSIST_DIRECTORY", "./chroma_db")
-CHROMA_COLLECTION_NAME = os.getenv("CHROMA_COLLECTION_NAME", "helpdesk_kb")
-
-# Create ChromaDB client
-chroma_client = chromadb.Client(
-    Settings(
-        chroma_db_impl="duckdb+parquet",
-        persist_directory=CHROMA_PERSIST_DIRECTORY
-    )
-)
-
-# Create or get collection
-if CHROMA_COLLECTION_NAME in [c.name for c in chroma_client.list_collections()]:
-    collection = chroma_client.get_collection(CHROMA_COLLECTION_NAME)
-else:
-    collection = chroma_client.create_collection(
-        name=CHROMA_COLLECTION_NAME,
-        metadata={"description": "IT HelpDesk chatbot knowledge base"}
-    )
-
-def get_collection():
-    """Return active ChromaDB collection"""
-    return collection
 
 # Create FastAPI app
 app = FastAPI(title="IT HelpDesk Chatbot API", version="1.0.0")

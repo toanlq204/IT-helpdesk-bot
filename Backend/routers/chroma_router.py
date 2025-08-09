@@ -2,7 +2,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional
-from main import get_collection
+from db.chroma_config import get_collection
 from openai import OpenAI
 import os
 
