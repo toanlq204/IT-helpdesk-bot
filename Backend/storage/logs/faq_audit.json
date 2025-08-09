@@ -1,0 +1,183 @@
+{
+  "operations": [
+    {
+      "operation_id": "be4d0bab-a1f0-4be5-bbbd-7197845cd998",
+      "timestamp": "2025-08-09T11:08:38.889206",
+      "operation": "reindex",
+      "faq_id": "collection",
+      "details": {
+        "collection_stats": {
+          "total_faqs": 0,
+          "collection_name": "it_faq",
+          "status": "empty"
+        },
+        "changes_since_last_reindex": 0,
+        "admin_user": "test_admin"
+      },
+      "admin_user": "test_admin"
+    },
+    {
+      "operation_id": "31df6af5-9982-4fc7-b964-fa885e5a7b2c",
+      "timestamp": "2025-08-09T11:10:24.472973",
+      "operation": "add",
+      "faq_id": "faq_test_001",
+      "details": {
+        "title": "How to reset printer settings",
+        "text_length": 187,
+        "tags": [
+          "printer",
+          "reset",
+          "settings",
+          "troubleshooting"
+        ],
+        "admin_user": "test_admin"
+      },
+      "admin_user": "test_admin"
+    },
+    {
+      "operation_id": "8fc04a9f-43be-404e-91aa-c017fe1dc52a",
+      "timestamp": "2025-08-09T11:10:24.950989",
+      "operation": "add",
+      "faq_id": "faq_test_002",
+      "details": {
+        "title": "Software license activation issues",
+        "text_length": 212,
+        "tags": [
+          "software",
+          "license",
+          "activation",
+          "troubleshooting"
+        ],
+        "admin_user": "test_admin"
+      },
+      "admin_user": "test_admin"
+    },
+    {
+      "operation_id": "80c9a287-a11b-4f92-aa93-746a1fc78eaa",
+      "timestamp": "2025-08-09T11:10:25.404286",
+      "operation": "add",
+      "faq_id": "faq_test_003",
+      "details": {
+        "title": "Creating secure backup schedules",
+        "text_length": 204,
+        "tags": [
+          "backup",
+          "security",
+          "scheduling",
+          "data protection"
+        ],
+        "admin_user": "test_admin"
+      },
+      "admin_user": "test_admin"
+    },
+    {
+      "operation_id": "18f2f0ac-5cf5-4aee-9b50-4882c0fd71f2",
+      "timestamp": "2025-08-09T11:10:26.418559",
+      "operation": "update",
+      "faq_id": "faq_test_001",
+      "details": {
+        "new_title": "How to reset printer settings (Updated)",
+        "new_text_length": 245,
+        "new_tags": [
+          "printer",
+          "reset",
+          "settings",
+          "troubleshooting",
+          "updated"
+        ],
+        "original_data": {
+          "note": "Original data not retrievable from ChromaDB"
+        },
+        "admin_user": "test_admin"
+      },
+      "admin_user": "test_admin"
+    },
+    {
+      "operation_id": "537d10d8-f02d-4697-a2ff-815c0797c27f",
+      "timestamp": "2025-08-09T11:10:26.644844",
+      "operation": "add",
+      "faq_id": "faq_48194672",
+      "details": {
+        "title": "Email server configuration",
+        "text_length": 180,
+        "tags": [
+          "email",
+          "server",
+          "configuration",
+          "setup"
+        ],
+        "admin_user": "test_admin_bulk"
+      },
+      "admin_user": "test_admin_bulk"
+    },
+    {
+      "operation_id": "d1719b77-7c28-435c-aba7-bc7cb067d614",
+      "timestamp": "2025-08-09T11:10:26.788939",
+      "operation": "add",
+      "faq_id": "faq_ae645b6c",
+      "details": {
+        "title": "Network drive mapping",
+        "text_length": 176,
+        "tags": [
+          "network",
+          "drive",
+          "mapping",
+          "file sharing"
+        ],
+        "admin_user": "test_admin_bulk"
+      },
+      "admin_user": "test_admin_bulk"
+    },
+    {
+      "operation_id": "605c85c5-9dee-4a58-8a16-874c28861df2",
+      "timestamp": "2025-08-09T11:10:26.914706",
+      "operation": "add",
+      "faq_id": "faq_0cc463a7",
+      "details": {
+        "title": "User account permission management",
+        "text_length": 179,
+        "tags": [
+          "user",
+          "permissions",
+          "account",
+          "management",
+          "security"
+        ],
+        "admin_user": "test_admin_bulk"
+      },
+      "admin_user": "test_admin_bulk"
+    },
+    {
+      "operation_id": "338f10f7-d07f-4ff1-b13c-b5630f903e19",
+      "timestamp": "2025-08-09T11:10:27.035738",
+      "operation": "delete",
+      "faq_id": "faq_test_003",
+      "details": {
+        "deleted_data": {
+          "note": "FAQ data not retrievable from ChromaDB before deletion"
+        },
+        "admin_user": "test_admin"
+      },
+      "admin_user": "test_admin"
+    },
+    {
+      "operation_id": "05a1fab2-ecf5-406b-8fcf-a6e014b4f3d2",
+      "timestamp": "2025-08-09T11:10:27.155174",
+      "operation": "reindex",
+      "faq_id": "collection",
+      "details": {
+        "collection_stats": {
+          "total_faqs": 5,
+          "collection_name": "it_faq",
+          "status": "healthy"
+        },
+        "changes_since_last_reindex": 8,
+        "admin_user": "test_admin"
+      },
+      "admin_user": "test_admin"
+    }
+  ],
+  "metadata": {
+    "created": "2025-08-09T11:08:37.107724"
+  }
+}

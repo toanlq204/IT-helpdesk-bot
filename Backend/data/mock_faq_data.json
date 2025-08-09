@@ -1,0 +1,129 @@
+[
+    {
+        "id": "1",
+        "title": "How to reset password",
+        "text": "To reset your password: 1) Go to the login page 2) Click 'Forgot Password' 3) Enter your email address 4) Check your email for reset instructions 5) Follow the link in the email to create a new password",
+        "tags": [
+            "auth",
+            "password",
+            "login"
+        ]
+    },
+    {
+        "id": "2",
+        "title": "VPN connection issues",
+        "text": "If you're having VPN connection problems: 1) Check your internet connection 2) Restart the VPN client 3) Try a different server location 4) Clear DNS cache 5) Contact IT if the issue persists",
+        "tags": [
+            "vpn",
+            "network",
+            "connection"
+        ]
+    },
+    {
+        "id": "3",
+        "title": "Email not working",
+        "text": "Email troubleshooting steps: 1) Check internet connection 2) Verify email settings (IMAP/SMTP) 3) Check spam folder 4) Try accessing webmail 5) Clear email cache 6) Restart email client",
+        "tags": [
+            "email",
+            "outlook",
+            "troubleshooting"
+        ]
+    },
+    {
+        "id": "4",
+        "title": "Software installation request",
+        "text": "To request software installation: 1) Submit a ticket through the IT portal 2) Include software name and business justification 3) Provide license information if available 4) Wait for approval from your manager 5) IT will install after approval",
+        "tags": [
+            "software",
+            "installation",
+            "request"
+        ]
+    },
+    {
+        "id": "5",
+        "title": "Printer not responding",
+        "text": "Printer troubleshooting: 1) Check power and cables 2) Restart printer 3) Check print queue for stuck jobs 4) Update printer drivers 5) Try printing from another device 6) Contact IT if issue continues",
+        "tags": [
+            "printer",
+            "hardware",
+            "troubleshooting"
+        ]
+    },
+    {
+        "id": "6",
+        "title": "Slow computer performance",
+        "text": "To improve computer performance: 1) Restart your computer 2) Close unnecessary programs 3) Run disk cleanup 4) Check for malware 5) Free up disk space 6) Update software 7) Consider hardware upgrade",
+        "tags": [
+            "performance",
+            "slow",
+            "computer",
+            "hardware"
+        ]
+    },
+    {
+        "id": "7",
+        "title": "Two-factor authentication setup",
+        "text": "Setting up 2FA: 1) Download authenticator app (Google Authenticator, Authy) 2) Log into your account settings 3) Find Security or 2FA section 4) Scan QR code with app 5) Enter verification code 6) Save backup codes",
+        "tags": [
+            "2fa",
+            "security",
+            "auth",
+            "setup"
+        ]
+    },
+    {
+        "id": "8",
+        "title": "File sharing permissions",
+        "text": "Managing file sharing: 1) Right-click the file/folder 2) Select Properties > Sharing 3) Click Advanced Sharing 4) Set permissions for users/groups 5) Apply changes 6) Test access with other users",
+        "tags": [
+            "files",
+            "sharing",
+            "permissions",
+            "access"
+        ]
+    },
+    {
+        "id": "9",
+        "title": "WiFi connection problems",
+        "text": "WiFi troubleshooting: 1) Check if WiFi is enabled 2) Restart WiFi adapter 3) Forget and reconnect to network 4) Update WiFi drivers 5) Move closer to router 6) Check for interference 7) Reset network settings",
+        "tags": [
+            "wifi",
+            "wireless",
+            "network",
+            "connection"
+        ]
+    },
+    {
+        "id": "10",
+        "title": "Microsoft Teams audio issues",
+        "text": "Teams audio problems: 1) Check microphone permissions 2) Test audio in Teams settings 3) Update audio drivers 4) Try different audio device 5) Restart Teams 6) Check Windows audio settings 7) Use Teams web version",
+        "tags": [
+            "teams",
+            "audio",
+            "microphone",
+            "meetings"
+        ]
+    },
+    {
+        "id": "11",
+        "title": "Data backup procedures",
+        "text": "Data backup best practices: 1) Use automated backup solutions 2) Follow 3-2-1 rule (3 copies, 2 different media, 1 offsite) 3) Regular backup testing 4) Cloud storage sync 5) Document important files location 6) Schedule regular backups",
+        "tags": [
+            "backup",
+            "data",
+            "storage",
+            "cloud"
+        ]
+    },
+    {
+        "id": "12",
+        "title": "Remote desktop access",
+        "text": "Setting up remote desktop: 1) Enable Remote Desktop in system settings 2) Configure firewall exceptions 3) Set up user permissions 4) Note computer's IP address 5) Use Remote Desktop Connection client 6) Enter credentials to connect",
+        "tags": [
+            "remote",
+            "desktop",
+            "access",
+            "rdp"
+        ]
+    }
+]
