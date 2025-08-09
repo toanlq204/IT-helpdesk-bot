@@ -33,8 +33,31 @@ class ChatService:
         }]
 
     def load_data_messages(self) -> list:
-        with open(self.chat_data_path, "r") as f:
-            return json.load(f)
+        try:
+            # Check if file exists first
+            if not os.path.exists(self.chat_data_path):
+                print(f"Warning: {self.chat_data_path} not found, creating default messages")
+                # Create default messages if file doesn't exist
+                default_messages = [{
+                    "role": "system",
+                    "content": "You are a helpful IT HelpDesk assistant that can answer questions and help with tasks. Always answer in the same language as the user, with max 500 tokens."
+                }]
+                # Create the directory if it doesn't exist
+                os.makedirs(os.path.dirname(self.chat_data_path), exist_ok=True)
+                # Save default messages to file
+                with open(self.chat_data_path, "w") as f:
+                    json.dump(default_messages, f, indent=2)
+                return default_messages
+            
+            with open(self.chat_data_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error loading messages from {self.chat_data_path}: {str(e)}")
+            # Return default system message if file can't be loaded
+            return [{
+                "role": "system",
+                "content": "You are a helpful IT HelpDesk assistant that can answer questions and help with tasks. Always answer in the same language as the user, with max 500 tokens."
+            }]
 
     def prepare_messages(self, messages: list) -> list:
         default_messages = self.load_data_messages()
@@ -42,77 +65,88 @@ class ChatService:
         return messages
     #sk-DRKoljlUoP4FtPCOBVy71Q
     def get_response(self, messages: list) -> str:
-        
-        client = openai.OpenAI(
-            base_url=os.getenv("OPENAI_BASE_URL"),
-            api_key=os.getenv("AZOPENAI_API_KEY")
-        )
+        try:
+            client = openai.OpenAI(
+                base_url=os.getenv("OPENAI_BASE_URL"),
+                api_key=os.getenv("AZOPENAI_API_KEY")
+            )
 
-        response = client.chat.completions.create(
-            model=os.getenv("OPENAI_MODEL"),
-            max_tokens=int(os.getenv("OPENAI_MAX_TOKENS")),
-            temperature=float(os.getenv("OPENAI_TEMPERATURE")),
-            messages=self.prepare_messages(messages),
-            tools=[
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "get_ticket_status",
-                        "description": "Get the status of a ticket",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {
-                                "ticket_id": {"type": "string"}
-                            }
-                        },
-                        "required": ["ticket_id"]
+            # Check if API key is available
+            api_key = os.getenv("AZOPENAI_API_KEY")
+            if not api_key or api_key == "your-api-key-here":
+                return "I'm sorry, but the AI service is not properly configured. Please contact your administrator to set up the API key."
+
+            response = client.chat.completions.create(
+                model=os.getenv("OPENAI_MODEL"),
+                max_tokens=int(os.getenv("OPENAI_MAX_TOKENS")),
+                temperature=float(os.getenv("OPENAI_TEMPERATURE")),
+                messages=self.prepare_messages(messages),
+                tools=[
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": "get_ticket_status",
+                            "description": "Get the status of a ticket",
+                            "parameters": {
+                                "type": "object",
+                                "properties": {
+                                    "ticket_id": {"type": "string"}
+                                }
+                            },
+                            "required": ["ticket_id"]
+                        }
+                    },
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": "create_ticket",
+                            "description": "Create a ticket",
+                            "parameters": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {"type": "string"}, 
+                                    "description": {"type": "string"}
+                                }
+                            },
+                            "required": ["title", "description"]
+                        }
                     }
-                },
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "create_ticket",
-                        "description": "Create a ticket",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {
-                                "title": {"type": "string"}, 
-                                "description": {"type": "string"}
-                            }
-                        },
-                        "required": ["title", "description"]
-                    }
-                }
-            ]
-        )
-        tool_calls = response.choices[0].message.tool_calls
-        if tool_calls is not None:
-            for tool_call in tool_calls:
-                if tool_call.function.name == "get_ticket_status":
-                    try:
-                        arguments = json.loads(tool_call.function.arguments)
-                        ticket_id = arguments["ticket_id"]
-                        ticket = self.ticket_service.find_ticket_by_partial_id(ticket_id)
-                        return self.ticket_to_friendly_message(ticket)
-                    except Exception as e:
-                        return None
-                elif tool_call.function.name == "create_ticket":
-                    try:
-                        arguments = json.loads(tool_call.function.arguments)
-                        title = arguments["title"]
-                        description = arguments["description"]
-                        priority = arguments["priority"] if "priority" in arguments else "medium"
-                       
-                        ticket = self.ticket_service.create_ticket(TicketCreate(
-                            title=title,
-                            description=description,
-                            priority=priority,
-                            status="open"
-                        ))
-                        return self.ticket_to_friendly_message(ticket)
-                    except Exception as e:
-                        return None
-        if response.choices[0].message.content is not None:
-            return response.choices[0].message.content
-        else:
-            return None
+                ]
+            )
+            
+            tool_calls = response.choices[0].message.tool_calls
+            if tool_calls is not None:
+                for tool_call in tool_calls:
+                    if tool_call.function.name == "get_ticket_status":
+                        try:
+                            arguments = json.loads(tool_call.function.arguments)
+                            ticket_id = arguments["ticket_id"]
+                            ticket = self.ticket_service.find_ticket_by_partial_id(ticket_id)
+                            return self.ticket_to_friendly_message(ticket)
+                        except Exception as e:
+                            return None
+                    elif tool_call.function.name == "create_ticket":
+                        try:
+                            arguments = json.loads(tool_call.function.arguments)
+                            title = arguments["title"]
+                            description = arguments["description"]
+                            priority = arguments["priority"] if "priority" in arguments else "medium"
+                           
+                            ticket = self.ticket_service.create_ticket(TicketCreate(
+                                title=title,
+                                description=description,
+                                priority=priority,
+                                status="open"
+                            ))
+                            return self.ticket_to_friendly_message(ticket)
+                        except Exception as e:
+                            return None
+            
+            if response.choices[0].message.content is not None:
+                return response.choices[0].message.content
+            else:
+                return "I'm sorry, I couldn't generate a response. Please try again."
+                
+        except Exception as e:
+            print(f"Error in get_response: {str(e)}")
+            return f"I'm sorry, I encountered an error while processing your request: {str(e)}"
