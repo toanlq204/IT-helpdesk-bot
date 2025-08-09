@@ -3,6 +3,7 @@ from openai import OpenAI
 import os
 import json
 import hashlib
+import re
 from datetime import datetime
 
 class UploadFileService:
@@ -12,11 +13,12 @@ class UploadFileService:
         self.openai_api_key = os.getenv("AZOPENAI_EMBEDDING_API_KEY")
         if not self.openai_api_key:
             raise ValueError("OPENAI_API_KEY environment variable not set.")
-        self.openai_client = OpenAI(api_key=self.openai_api_key)
+        self.openai_client_emb = OpenAI(api_key=self.openai_api_key)
+        self.openai_client_chat = OpenAI(api_key=os.getenv("AZOPENAI_API_KEY"))
 
     def embed_text(self, text: str):
         # Use OpenAI's embedding endpoint
-        response = self.openai_client.embeddings.create(
+        response = self.openai_client_emb.embeddings.create(
             input=text,
             model=os.getenv("AZOPENAI_EMBEDDING_MODEL")
         )
@@ -93,7 +95,7 @@ class UploadFileService:
         """
         try:
             prompt = f"""
-            Analyze chunk {chunk_num} of {total_chunks} from a document and provide metadata in JSON format:
+            Analyze chunk {chunk_num} of {total_chunks} from a document and provide metadata in JSON format. Do not include markdown, code fences, or any text before/after the JSON:
             
             Chunk content: {chunk}
             
@@ -113,10 +115,11 @@ class UploadFileService:
             Return only valid JSON. If chunk is too short or irrelevant, return null values for optional fields.
             """
             
-            response = self.openai_client.chat.completions.create(
-                model=os.getenv("AZOPENAI_CHAT_MODEL", "gpt-3.5-turbo"),
+            response = self.openai_client_chat.chat.completions.create(
+                model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=400,
+                response_format={"type": "json_object"},
                 temperature=0.1
             )
             
@@ -197,7 +200,13 @@ class UploadFileService:
         word_count = len(file_content.split())
         estimated_read_time = f"{max(1, word_count // 200)} minutes"
         
-        # Build final metadata
+        # Build final metadata - Convert lists to strings for ChromaDB compatibility
+        keywords_list = get_top_items(all_keywords, 15)
+        topics_list = get_top_items(all_topics, 10)
+        key_concepts_list = get_top_items(all_key_concepts, 10)
+        action_items_list = get_top_items(all_action_items, 8) if all_action_items else []
+        technical_terms_list = get_top_items(all_technical_terms, 12) if all_technical_terms else []
+        
         final_metadata = {
             "file_name": file_name,
             "file_size": len(file_content),
@@ -206,16 +215,16 @@ class UploadFileService:
             "word_count": word_count,
             "character_count": len(file_content),
             "summary": overall_summary,
-            "keywords": get_top_items(all_keywords, 15),
-            "topics": get_top_items(all_topics, 10),
-            "key_concepts": get_top_items(all_key_concepts, 10),
+            "keywords": ", ".join(keywords_list) if keywords_list else "",
+            "topics": ", ".join(topics_list) if topics_list else "",
+            "key_concepts": ", ".join(key_concepts_list) if key_concepts_list else "",
             "content_type": get_most_common(content_types),
             "topic_category": get_most_common(topic_categories),
             "difficulty_level": get_most_common(difficulty_levels),
             "estimated_read_time": estimated_read_time,
             "chunks_analyzed": len(chunk_metadata_list),
-            "action_items": get_top_items(all_action_items, 8) if all_action_items else [],
-            "technical_terms": get_top_items(all_technical_terms, 12) if all_technical_terms else []
+            "action_items": ", ".join(action_items_list) if action_items_list else "",
+            "technical_terms": ", ".join(technical_terms_list) if technical_terms_list else ""
         }
         
         return final_metadata
@@ -243,8 +252,8 @@ class UploadFileService:
             Provide a cohesive summary that captures the main purpose and key points of the entire document.
             """
             
-            response = self.openai_client.chat.completions.create(
-                model=os.getenv("AZOPENAI_CHAT_MODEL", "gpt-3.5-turbo"),
+            response = self.openai_client_chat.chat.completions.create(
+                model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=200,
                 temperature=0.1
@@ -291,10 +300,15 @@ class UploadFileService:
             "upload_timestamp": datetime.now().isoformat(),
             "word_count": len(words),
             "character_count": len(file_content),
-            "keywords": keywords,
+            "keywords": ", ".join(keywords) if keywords else "",
             "content_type": content_type,
             "estimated_read_time": f"{max(1, len(words) // 200)} minutes"
         }
+
+    def clean_json_string(json_string):
+        pattern = r'^```json\s*(.*?)\s*```$'
+        cleaned_string = re.sub(pattern, r'\1', json_string, flags=re.DOTALL)
+        return cleaned_string.strip()
 
     def store_file_content(self, file_content: str, file_name: str, metadata: dict = None, use_ai_metadata: bool = True):
         try:
@@ -315,7 +329,7 @@ class UploadFileService:
                     "word_count": len(file_content.split()),
                 }
                 metadata = {**basic_info, **metadata}
-            
+            print(metadata)
             self.collection.add(
                 documents=[file_content],
                 embeddings=[embedding],
