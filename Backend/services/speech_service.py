@@ -153,3 +153,14 @@ def text_to_speech(text, model, tokenizer):
         return
  
     play_audio(waveform, sample_rate, "pygame")
+
+if __name__ == "__main__":
+    model, tokenizer = load_speech_model()
+    text = "Import the functions from our main script"
+    text_to_speech(text, model, tokenizer)
+   
+    text = "Save audio to temporary file"
+    text_to_speech(text, model, tokenizer)
+   
+    text = "File might be locked during playback"
+    text_to_speech(text, model, tokenizer)
