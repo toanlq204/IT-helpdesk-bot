@@ -5,73 +5,10 @@ Backend/__pycache__/
 Backend/**/__pycache__/
 Backend/**/**/__pycache__/
 Backend/**/*/__pycache__
-Backend/*.py[cod]
-Backend/*$py.class
-Backend/*.so
-Backend/.Python
-Backend/build/
-Backend/develop-eggs/
-Backend/dist/
-Backend/downloads/
-Backend/eggs/
-Backend/.eggs/
-Backend/lib/
-Backend/lib64/
-Backend/parts/
-Backend/sdist/
-Backend/var/
-Backend/wheels/
-Backend/*.egg-info/
-Backend/.installed.cfg
-Backend/*.egg
-
-# Virtual environments
-Backend/.env
+Backend/__pycache__
 Backend/.venv
-Backend/env/
-Backend/venv/
-Backend/ENV/
-Backend/env.bak/
-Backend/venv.bak/
-Backend/.venv/
-.venv/
-venv/
-
-# ChromaDB and database files
-Backend/chroma_db/
-chroma_db/
-**/chroma_db/
-Backend/*.db
-Backend/*.sqlite
-Backend/*.sqlite3
-*.chroma
-*.index
-*.parquet
-**/chroma.sqlite3
-**/index_metadata.pickle
-
-# Storage and data folders
-Backend/storage/
-Backend/logs/
-Backend/conversations/
-Backend/uploads/
-Backend/tickets/
-Backend/threads/
-Backend/data/mock_*.json
-
-# Node.js (Frontend)
-Frontend/node_modules/
-Frontend/npm-debug.log*
-Frontend/yarn-debug.log*
-Frontend/yarn-error.log*
-Frontend/.npm
-Frontend/.yarn-integrity
-
-# React build
-Frontend/build/
-Frontend/dist/
-
-# Environment variables (all levels)
+Backend/venv
+Backend/storage
 .env
 .env.local
 .env.development.local

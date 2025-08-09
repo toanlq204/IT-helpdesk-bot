@@ -1,8 +1,12 @@
+from routers import ticket_router, conversation_router, chat_router, upload_router
+from routers import ticket_router, conversation_router, chat_router, logging_router, faq_management_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
-from routers import ticket_router, conversation_router, chat_router, logging_router, faq_management_router
+<< << << < HEAD
+== == == =
+>>>>>> > main
 # Load environment variables
 load_dotenv()
 
@@ -19,16 +23,15 @@ app.add_middleware(
 )
 
 # Create necessary directories
-os.makedirs("tickets", exist_ok=True)
-os.makedirs("threads", exist_ok=True)
-os.makedirs("data", exist_ok=True)
-os.makedirs("storage/logs", exist_ok=True)  # For FAQ audit logs
+os.makedirs("storage/tickets", exist_ok=True)
+os.makedirs("storage/threads", exist_ok=True)
+os.makedirs("storage/data", exist_ok=True)
+os.makedirs("storage/chroma_db", exist_ok=True)  # For file upload service
+
 app.include_router(ticket_router, tags=["Tickets"])
 app.include_router(conversation_router, tags=["Conversations"])
 app.include_router(chat_router, tags=["Chat"])
-app.include_router(logging_router, prefix="/api", tags=["Logging & Feedback"])
-app.include_router(faq_management_router, prefix="/api",
-                   tags=["FAQ Management"])
+app.include_router(upload_router, tags=["File Upload"])
 
 
 @app.get("/")
