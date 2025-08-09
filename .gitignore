@@ -5,3 +5,4 @@ Backend/storage/threads
 Backend/.venv
 Backend/chroma_db
 Backend/storage
+.env
