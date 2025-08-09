@@ -175,6 +175,55 @@
         "admin_user": "test_admin"
       },
       "admin_user": "test_admin"
+    },
+    {
+      "operation_id": "e6e1717d-f97a-4cd8-87fe-3dfe6d595332",
+      "timestamp": "2025-08-09T11:26:31.950817",
+      "operation": "add",
+      "faq_id": "test_crud_1754713591",
+      "details": {
+        "title": "Test CRUD FAQ",
+        "text_length": 52,
+        "tags": [
+          "test",
+          "crud"
+        ],
+        "admin_user": "test_admin"
+      },
+      "admin_user": "test_admin"
+    },
+    {
+      "operation_id": "5baf6fa6-24ee-4160-b5eb-ec691a02d069",
+      "timestamp": "2025-08-09T11:26:32.059797",
+      "operation": "update",
+      "faq_id": "test_crud_1754713591",
+      "details": {
+        "new_title": "Test CRUD FAQ (Updated)",
+        "new_text_length": 61,
+        "new_tags": [
+          "test",
+          "crud",
+          "updated"
+        ],
+        "original_data": {
+          "note": "Original data not retrievable from ChromaDB"
+        },
+        "admin_user": "test_admin"
+      },
+      "admin_user": "test_admin"
+    },
+    {
+      "operation_id": "60e5d336-f4b0-4ee4-b56e-1ebceed2229d",
+      "timestamp": "2025-08-09T11:26:32.062351",
+      "operation": "delete",
+      "faq_id": "test_crud_1754713591",
+      "details": {
+        "deleted_data": {
+          "note": "FAQ data not retrievable from ChromaDB before deletion"
+        },
+        "admin_user": "test_admin"
+      },
+      "admin_user": "test_admin"
     }
   ],
   "metadata": {
