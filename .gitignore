@@ -4,3 +4,4 @@ Backend/__pycache__
 Backend/storage/threads
 Backend/.env
 Backend/routers/__pycache__/ticket_router.cpython-313.pyc
+.env
