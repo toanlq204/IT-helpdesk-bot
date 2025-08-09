@@ -3,3 +3,5 @@ Backend/**/*/__pycache__
 Backend/__pycache__
 Backend/storage/threads
 Backend/.venv
+Backend/chroma_db
+Backend/storage
