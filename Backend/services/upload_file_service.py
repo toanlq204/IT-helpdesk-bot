@@ -13,8 +13,8 @@ class UploadFileService:
         self.openai_api_key = os.getenv("AZOPENAI_EMBEDDING_API_KEY")
         if not self.openai_api_key:
             raise ValueError("OPENAI_API_KEY environment variable not set.")
-        self.openai_client_emb = OpenAI(api_key=self.openai_api_key)
-        self.openai_client_chat = OpenAI(api_key=os.getenv("AZOPENAI_API_KEY"))
+        self.openai_client_emb = OpenAI(api_key=os.getenv("AZOPENAI_EMBEDDING_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL"))
+        self.openai_client_chat = OpenAI(api_key=os.getenv("AZOPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL"))
 
     def embed_text(self, text: str):
         # Use OpenAI's embedding endpoint

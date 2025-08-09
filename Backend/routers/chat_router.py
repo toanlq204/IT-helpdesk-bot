@@ -43,7 +43,7 @@ async def chat(
         
         # Get AI response
         #assistant_message, function_calls = await openai_service.get_chat_response(messages)
-        assistant_message = chat_service.get_response(conversation['messages'])
+        assistant_message = chat_service.get_response(conversation['messages'], chat_request.message)
         # Add user message to conversation
        
         if assistant_message is not None and isinstance(assistant_message, str):
@@ -63,4 +63,5 @@ async def chat(
         )
         
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail=f"Chat failed: {str(e)}") 

@@ -54,8 +54,7 @@ const ChatWindow = ({ conversation, onConversationUpdate, uploadedFiles }) => {
     const userMessage = {
       role: 'user',
       content: inputMessage,
-      timestamp: new Date().toISOString(),
-      files: uploadedFiles.map(f => f.filename)
+      timestamp: new Date().toISOString()
     };
 
     setMessages(prev => [...prev, userMessage]);
