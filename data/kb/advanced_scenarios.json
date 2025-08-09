@@ -1,0 +1,223 @@
+{
+  "knowledge_base": {
+    "version": "4.0",
+    "last_updated": "2025-08-09",
+    "categories": ["security", "software", "hardware", "network", "cloud", "compliance", "training", "emergency"],
+    "language_support": ["en"],
+    "total_articles": 25,
+    "search_enabled": true,
+    "auto_suggest": true,
+    "specialization": "advanced_scenarios"
+  },
+  "faqs": [
+    {
+      "id": 201,
+      "question": "Suspected malware or virus infection",
+      "answer": "If you suspect malware infection:\n1. Disconnect from internet immediately\n2. Run full antivirus scan with updated definitions\n3. Boot from antivirus rescue disk if system is compromised\n4. Check Task Manager for suspicious processes\n5. Change all passwords after cleaning\n6. Contact IT Security team immediately\n7. Report incident for security analysis",
+      "category": "security",
+      "priority": "critical",
+      "keywords": ["malware", "virus", "infection", "antivirus", "security", "incident", "compromise"],
+      "related_tickets": [],
+      "resolution_time_minutes": 60,
+      "escalation_required": true
+    },
+    {
+      "id": 202,
+      "question": "Data breach or security incident response",
+      "answer": "In case of suspected data breach:\n1. Do NOT try to fix it yourself\n2. Immediately disconnect affected systems\n3. Document what happened without altering evidence\n4. Contact IT Security team urgently\n5. Preserve all logs and evidence\n6. Do not communicate about incident publicly\n7. Follow company incident response procedures",
+      "category": "security",
+      "priority": "critical",
+      "keywords": ["data", "breach", "security", "incident", "response", "evidence", "logs"],
+      "related_tickets": [],
+      "resolution_time_minutes": 5,
+      "escalation_required": true
+    },
+    {
+      "id": 203,
+      "question": "System backup failure or corruption",
+      "answer": "When backup systems fail:\n1. Immediately report backup failure to IT\n2. Identify which systems/data are affected\n3. Check alternative backup locations\n4. Verify integrity of existing backups\n5. Implement manual backup procedures if needed\n6. Do not make major system changes until backup is restored\n7. Document failure for root cause analysis",
+      "category": "backup",
+      "priority": "critical",
+      "keywords": ["backup", "failure", "corruption", "restore", "integrity", "manual"],
+      "related_tickets": [],
+      "resolution_time_minutes": 30,
+      "escalation_required": true
+    },
+    {
+      "id": 204,
+      "question": "Server or critical system downtime",
+      "answer": "During server downtime:\n1. Check system status dashboard first\n2. Verify if it's planned maintenance\n3. Document impact on business operations\n4. Use alternative systems if available\n5. Communicate status to affected users\n6. Contact IT immediately if unplanned\n7. Implement business continuity procedures",
+      "category": "hardware",
+      "priority": "critical",
+      "keywords": ["server", "downtime", "critical", "system", "maintenance", "business", "continuity"],
+      "related_tickets": [],
+      "resolution_time_minutes": 15,
+      "escalation_required": true
+    },
+    {
+      "id": 205,
+      "question": "How to handle phishing emails and suspicious messages",
+      "answer": "To handle suspicious emails:\n1. Do NOT click any links or attachments\n2. Do NOT provide personal or company information\n3. Forward suspicious email to security@company.com\n4. Mark email as phishing in Outlook\n5. Delete the email after reporting\n6. Change passwords if you clicked anything\n7. Report to IT Security if you suspect compromise",
+      "category": "security",
+      "priority": "high",
+      "keywords": ["phishing", "suspicious", "email", "links", "attachments", "security"],
+      "related_tickets": [],
+      "resolution_time_minutes": 5
+    },
+    {
+      "id": 206,
+      "question": "Cloud service outages (Office 365, Teams, etc.)",
+      "answer": "During cloud service outages:\n1. Check Microsoft Service Health dashboard\n2. Verify your internet connection first\n3. Try accessing from different device/network\n4. Clear browser cache and cookies\n5. Use mobile app as alternative\n6. Check company status updates\n7. Document business impact for IT",
+      "category": "cloud",
+      "priority": "high",
+      "keywords": ["cloud", "outage", "office365", "teams", "service", "health", "microsoft"],
+      "related_tickets": [],
+      "resolution_time_minutes": 10
+    },
+    {
+      "id": 207,
+      "question": "GDPR and data privacy compliance questions",
+      "answer": "For GDPR and privacy compliance:\n1. Only collect necessary personal data\n2. Obtain proper consent before data collection\n3. Secure data with encryption and access controls\n4. Provide data access rights to individuals\n5. Report data breaches within 72 hours\n6. Contact Legal/Compliance team for guidance\n7. Document all data processing activities",
+      "category": "compliance",
+      "priority": "high",
+      "keywords": ["gdpr", "privacy", "compliance", "data", "consent", "breach", "legal"],
+      "related_tickets": [],
+      "resolution_time_minutes": 30
+    },
+    {
+      "id": 208,
+      "question": "Remote work security best practices",
+      "answer": "Remote work security guidelines:\n1. Use company VPN for all work connections\n2. Keep home WiFi password-protected\n3. Use only company-approved devices\n4. Enable screen lock when away\n5. Secure physical workspace\n6. Use headphones for confidential calls\n7. Regular security awareness training",
+      "category": "security",
+      "priority": "medium",
+      "keywords": ["remote", "work", "security", "vpn", "wifi", "devices", "confidential"],
+      "related_tickets": [],
+      "resolution_time_minutes": 20
+    },
+    {
+      "id": 209,
+      "question": "Software licensing and compliance issues",
+      "answer": "For software licensing compliance:\n1. Only install approved software\n2. Check license count before installations\n3. Remove software when employee leaves\n4. Track license usage and renewals\n5. Report unlicensed software immediately\n6. Contact procurement for new licenses\n7. Maintain accurate software inventory",
+      "category": "compliance",
+      "priority": "medium",
+      "keywords": ["software", "licensing", "compliance", "approved", "inventory", "procurement"],
+      "related_tickets": [],
+      "resolution_time_minutes": 25
+    },
+    {
+      "id": 210,
+      "question": "Emergency IT procedures during disasters",
+      "answer": "During IT emergencies/disasters:\n1. Follow business continuity plan\n2. Secure critical data and systems\n3. Activate backup communication channels\n4. Notify emergency response team\n5. Document all actions taken\n6. Coordinate with facility management\n7. Implement recovery procedures",
+      "category": "emergency",
+      "priority": "critical",
+      "keywords": ["emergency", "disaster", "continuity", "backup", "recovery", "critical"],
+      "related_tickets": [],
+      "resolution_time_minutes": 60,
+      "escalation_required": true
+    },
+    {
+      "id": 211,
+      "question": "Performance monitoring and system optimization",
+      "answer": "For system performance optimization:\n1. Monitor CPU, memory, and disk usage\n2. Identify resource-intensive processes\n3. Schedule maintenance during off-hours\n4. Update drivers and system patches\n5. Clean temporary files and logs\n6. Defragment drives if using HDDs\n7. Consider hardware upgrades if needed",
+      "category": "performance",
+      "priority": "medium",
+      "keywords": ["performance", "monitoring", "optimization", "cpu", "memory", "disk", "maintenance"],
+      "related_tickets": [],
+      "resolution_time_minutes": 45
+    },
+    {
+      "id": 212,
+      "question": "AI and machine learning tool requests",
+      "answer": "For AI/ML tool requests:\n1. Submit detailed business case\n2. Specify data requirements and sources\n3. Address privacy and security concerns\n4. Get legal approval for data usage\n5. Consider computational resource needs\n6. Plan for user training and adoption\n7. Include compliance and governance framework",
+      "category": "software",
+      "priority": "medium",
+      "keywords": ["ai", "machine", "learning", "ml", "data", "privacy", "compliance", "governance"],
+      "related_tickets": [],
+      "resolution_time_minutes": 90
+    },
+    {
+      "id": 213,
+      "question": "API integration and third-party service connectivity",
+      "answer": "For API integration issues:\n1. Check API endpoint availability\n2. Verify authentication credentials\n3. Review API rate limits and quotas\n4. Test with API documentation examples\n5. Check network connectivity and firewall\n6. Monitor API response codes and errors\n7. Contact vendor support if needed",
+      "category": "network",
+      "priority": "medium",
+      "keywords": ["api", "integration", "third-party", "authentication", "rate", "limits", "firewall"],
+      "related_tickets": [],
+      "resolution_time_minutes": 30
+    },
+    {
+      "id": 214,
+      "question": "Digital certificate and SSL/TLS issues",
+      "answer": "For certificate and SSL problems:\n1. Check certificate expiration dates\n2. Verify certificate chain integrity\n3. Ensure proper certificate installation\n4. Check for certificate authority issues\n5. Test SSL/TLS configuration\n6. Update certificate stores if needed\n7. Coordinate renewal with IT Security",
+      "category": "security",
+      "priority": "high",
+      "keywords": ["certificate", "ssl", "tls", "expiration", "chain", "authority", "renewal"],
+      "related_tickets": [],
+      "resolution_time_minutes": 40
+    },
+    {
+      "id": 215,
+      "question": "IoT device security and management",
+      "answer": "For IoT device management:\n1. Change default passwords immediately\n2. Keep firmware updated regularly\n3. Segregate IoT devices on separate network\n4. Monitor device traffic and behavior\n5. Disable unnecessary features/services\n6. Implement device access controls\n7. Regular security assessments",
+      "category": "security",
+      "priority": "medium",
+      "keywords": ["iot", "devices", "firmware", "passwords", "network", "segregation", "security"],
+      "related_tickets": [],
+      "resolution_time_minutes": 35
+    }
+  ],
+  "emergency_procedures": [
+    {
+      "id": "EP001",
+      "title": "Critical Security Incident Response",
+      "trigger": "Suspected data breach, malware outbreak, or security compromise",
+      "immediate_actions": [
+        "Isolate affected systems",
+        "Contact IT Security team",
+        "Preserve evidence",
+        "Document incident timeline"
+      ],
+      "escalation_path": ["IT Security Manager", "CISO", "Legal Team", "Executive Leadership"],
+      "communication_plan": "Authorized personnel only until investigation complete"
+    },
+    {
+      "id": "EP002",
+      "title": "Business Continuity Activation",
+      "trigger": "Major system outage affecting business operations",
+      "immediate_actions": [
+        "Assess scope of impact",
+        "Activate backup systems",
+        "Notify stakeholders",
+        "Implement workaround procedures"
+      ],
+      "escalation_path": ["IT Manager", "Business Unit Leaders", "Crisis Management Team"],
+      "communication_plan": "Regular updates every 30 minutes during outage"
+    }
+  ],
+  "advanced_troubleshooting": [
+    {
+      "id": "AT001",
+      "scenario": "Complex network routing issues",
+      "diagnostic_tools": ["traceroute", "netstat", "wireshark", "nslookup"],
+      "methodology": [
+        "Layer-by-layer OSI model analysis",
+        "Packet capture and analysis",
+        "Route table examination",
+        "DNS resolution testing"
+      ],
+      "expertise_required": "Network Administrator level"
+    },
+    {
+      "id": "AT002", 
+      "scenario": "Database performance degradation",
+      "diagnostic_tools": ["Query analyzer", "Performance monitor", "Index analysis", "Execution plans"],
+      "methodology": [
+        "Query performance analysis",
+        "Index optimization review",
+        "Resource utilization monitoring",
+        "Database configuration tuning"
+      ],
+      "expertise_required": "Database Administrator level"
+    }
+  ]
+}

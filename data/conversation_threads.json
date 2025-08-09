@@ -500,8 +500,21 @@
       "summary": "",
       "message_count": 0,
       "user_message_count": 0
+    },
+    {
+      "thread_id": "4a126784-43ac-428f-989a-fc7d0266a9a4",
+      "username": "user",
+      "title": "New Conversation",
+      "created_date": "2025-08-09T10:25:17.578620",
+      "last_updated": "2025-08-09T10:25:17.578630",
+      "messages": [],
+      "is_active": true,
+      "tags": [],
+      "summary": "",
+      "message_count": 0,
+      "user_message_count": 0
     }
   ],
-  "last_updated": "2025-08-02T16:50:45.140554",
-  "total_threads": 9
+  "last_updated": "2025-08-09T10:25:17.578702",
+  "total_threads": 10
 }

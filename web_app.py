@@ -22,7 +22,13 @@ Enterprise-grade Streamlit web application with advanced features:
 - Real-time statistics and analytics
 - Multi-department tracking
 
-📊 **Enterprise Features**
+� **Voice Features**
+- Text-to-speech with multiple backends
+- System voice (macOS/Windows/Linux)
+- Web Speech API fallback
+- Voice control with start/stop functionality
+
+�📊 **Enterprise Features**
 - Statistical dashboards by role
 - Data upload capabilities (Admin)
 - Multi-session chat support
@@ -34,19 +40,22 @@ Enterprise-grade Streamlit web application with advanced features:
 - Secure data handling
 
 Author: GitHub Copilot
-Version: 3.0 - Enterprise Edition
+Version: 3.1 - Voice-Enabled Enterprise Edition
 Date: August 2025
 """
 
+# Standard library imports
 import streamlit as st
 import asyncio
 import json
 import time
 import os
+import base64
+import sys
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 
-# Configure page
+# Configure Streamlit page
 st.set_page_config(
     page_title="🤖 Enterprise IT Helpdesk Assistant",
     page_icon="🤖",
@@ -54,26 +63,322 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Import enhanced bot modules
-import sys
+# Add current directory to Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
+# Core application imports
 try:
     from chatbot.core import EnhancedITHelpdeskBot
     from functions.helpdesk_functions import (
         get_user_by_username, get_localized_text, load_mock_data
     )
+    from prompts.templates import get_user_role_prompt
 except ImportError as e:
     st.error("❌ Unable to load chatbot modules. Please check installation.")
     st.error(f"Error details: {e}")
     st.stop()
 
+# =============================================================================
+# TTS (Text-to-Speech) System Configuration
+# =============================================================================
+
+# Full AI TTS with Hugging Face models (requires PyTorch)
+TTS_AVAILABLE = False
+try:
+    from transformers import SpeechT5Processor, SpeechT5ForTextToSpeech, SpeechT5HifiGan
+    from datasets import load_dataset
+    import torch
+    import soundfile as sf
+    import io
+    import logging
+    TTS_AVAILABLE = True
+    print("✅ Full AI TTS available (Hugging Face SpeechT5)")
+except ImportError:
+    print("⚠️  Full AI TTS not available. Install with: pip install transformers torch soundfile datasets")
+
+# Simple TTS fallback (system voice + web speech)
+SIMPLE_TTS_AVAILABLE = False
+try:
+    from simple_tts import SimpleTTSManager
+    SIMPLE_TTS_AVAILABLE = True
+    print("✅ Simple TTS fallback available (System voice + Web Speech)")
+except ImportError:
+    print("❌ Simple TTS fallback not available")
+
+# TTS Manager Class with fallback support
+# =============================================================================
+# TTS Manager Class - Enterprise Voice System
+# =============================================================================
+
+class TTSManager:
+    """
+    Enterprise Text-to-Speech Manager with Multi-Backend Support
+    
+    Provides intelligent fallback between different TTS systems:
+    1. Full AI TTS: Hugging Face SpeechT5 models (high quality)
+    2. Simple TTS: System voice + Web Speech API (reliable fallback)
+    
+    Features:
+    - Automatic backend selection based on availability
+    - Voice playback control (start/stop)
+    - Text preprocessing for better speech quality
+    - Session state management
+    - Corporate environment compatibility
+    """
+    
+    def __init__(self):
+        """Initialize TTS manager with automatic backend detection"""
+        # Full AI TTS components
+        self.processor = None
+        self.model = None
+        self.vocoder = None
+        self.speaker_embeddings = None
+        
+        # Simple TTS fallback
+        self.simple_tts = None
+        
+        # Manager state
+        self.is_initialized = False
+        self.mode = None  # 'full', 'simple', or 'none'
+        
+        # Auto-initialize with best available backend
+        self.initialize()
+    
+    def initialize(self) -> bool:
+        """
+        Initialize TTS with best available method
+        
+        Returns:
+            bool: True if initialization successful, False otherwise
+        """
+        try:
+            if TTS_AVAILABLE:
+                return self._initialize_full_tts()
+            elif SIMPLE_TTS_AVAILABLE:
+                return self._initialize_simple_tts()
+            else:
+                print("❌ No TTS capabilities available")
+                return False
+        except Exception as e:
+            print(f"TTS initialization failed: {e}")
+            # Try simple fallback even if full TTS failed
+            if SIMPLE_TTS_AVAILABLE:
+                return self._initialize_simple_tts()
+            return False
+    
+    def _initialize_full_tts(self) -> bool:
+        """Initialize full Hugging Face TTS"""
+        try:
+            print("Initializing SpeechT5 TTS model...")
+            # Load SpeechT5 models
+            self.processor = SpeechT5Processor.from_pretrained("microsoft/speecht5_tts")
+            self.model = SpeechT5ForTextToSpeech.from_pretrained("microsoft/speecht5_tts")
+            self.vocoder = SpeechT5HifiGan.from_pretrained("microsoft/speecht5_hifigan")
+            
+            # Load speaker embeddings dataset
+            embeddings_dataset = load_dataset("Matthijs/cmu-arctic-xvectors", split="validation")
+            self.speaker_embeddings = torch.tensor(embeddings_dataset[7306]["xvector"]).unsqueeze(0)
+            
+            self.is_initialized = True
+            self.mode = 'full'
+            print("✅ Full TTS models initialized successfully")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error initializing full TTS: {e}")
+            return False
+    
+    def _initialize_simple_tts(self) -> bool:
+        """Initialize simple TTS fallback"""
+        try:
+            self.simple_tts = SimpleTTSManager()
+            self.is_initialized = True
+            self.mode = 'simple'
+            print(f"✅ Simple TTS initialized with methods: {self.simple_tts.available_methods}")
+            return True
+        except Exception as e:
+            print(f"❌ Error initializing simple TTS: {e}")
+            return False
+    
+    def text_to_speech(self, text: str, max_length: int = 500) -> Optional[str]:
+        """
+        Convert text to speech and return base64 encoded audio or web speech JS
+        
+        Args:
+            text: Text to convert to speech
+            max_length: Maximum text length to prevent memory issues
+            
+        Returns:
+            Base64 encoded audio data, web speech JS, or None if failed
+        """
+        if not self.is_initialized:
+            return None
+        
+        try:
+            # Truncate text if too long
+            if len(text) > max_length:
+                text = text[:max_length] + "..."
+            
+            # Clean text for TTS
+            text = self._clean_text_for_tts(text)
+            
+            if self.mode == 'full':
+                return self._generate_full_tts(text)
+            elif self.mode == 'simple':
+                return self._generate_simple_tts(text)
+            else:
+                return None
+                
+        except Exception as e:
+            print(f"❌ TTS generation failed: {e}")
+            return None
+    
+    def _generate_full_tts(self, text: str) -> Optional[str]:
+        """Generate TTS using full Hugging Face models"""
+        try:
+            # Process text
+            inputs = self.processor(text=text, return_tensors="pt")
+            
+            # Generate speech
+            with torch.no_grad():
+                speech = self.model.generate_speech(
+                    inputs["input_ids"], 
+                    self.speaker_embeddings, 
+                    vocoder=self.vocoder
+                )
+            
+            # Convert to audio file in memory
+            audio_buffer = io.BytesIO()
+            sf.write(audio_buffer, speech.numpy(), samplerate=16000, format='WAV')
+            audio_buffer.seek(0)
+            
+            # Encode to base64
+            audio_base64 = base64.b64encode(audio_buffer.read()).decode()
+            return audio_base64
+            
+        except Exception as e:
+            print(f"❌ Full TTS generation failed: {e}")
+            return None
+    
+    def _generate_simple_tts(self, text: str) -> Optional[str]:
+        """Generate TTS using simple fallback methods"""
+        try:
+            # Try system TTS first
+            if self.simple_tts.text_to_speech_system(text):
+                # Return a simple audio placeholder for UI consistency
+                return self.simple_tts.create_audio_placeholder(text)
+            else:
+                # Return web speech JavaScript
+                return self.simple_tts.text_to_speech_web(text)
+                
+        except Exception as e:
+            print(f"❌ Simple TTS generation failed: {e}")
+            return None
+    
+    def _clean_text_for_tts(self, text: str) -> str:
+        """Clean text for better TTS output"""
+        import re
+        
+        # Remove markdown formatting
+        text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)  # Bold
+        text = re.sub(r'\*(.*?)\*', r'\1', text)      # Italic
+        text = re.sub(r'`(.*?)`', r'\1', text)        # Code
+        
+        # Remove emojis and special characters
+        text = re.sub(r'[😀-🙏🌀-🗿🚀-🛿🇀-🇿]', '', text)  # Emojis
+        text = re.sub(r'[•◦▪▫◾◽]', '', text)          # Bullets
+        text = re.sub(r'[📊📈📉📋📌📍📎📏📐📑📒📓📔📕📖📗📘📙📚📛📜📝📞📟📠📡📢📣📤📥📦📧📨📩📪📫📬📭📮📯📰📱📲📳📴📵📶📷📸📹📺📻📼📽📾📿🔀-🔿]', '', text)  # Various symbols
+        
+        # Replace multiple spaces with single space
+        text = re.sub(r'\s+', ' ', text)
+        
+        # Remove URLs
+        text = re.sub(r'http[s]?://\S+', '', text)
+        
+        # Clean up common IT terms for better pronunciation
+        replacements = {
+            'IT': 'I T',
+            'FAQ': 'frequently asked questions',
+            'VPN': 'V P N',
+            'DNS': 'D N S',
+            'CPU': 'C P U',
+            'RAM': 'R A M',
+            'USB': 'U S B',
+            'WiFi': 'Wi-Fi',
+            'API': 'A P I',
+            'URL': 'U R L',
+            'HTTP': 'H T T P',
+            'HTTPS': 'H T T P S',
+            'SSL': 'S S L',
+            'TLS': 'T L S'
+        }
+        
+        for term, replacement in replacements.items():
+            text = text.replace(term, replacement)
+        
+        return text.strip()
+    
+    def stop_speech(self) -> bool:
+        """Stop current TTS playback"""
+        try:
+            if self.mode == 'simple' and self.simple_tts:
+                # Stop system speech
+                success = self.simple_tts.stop_system_speech()
+                # Also stop web speech
+                stop_js = self.simple_tts.stop_web_speech()
+                # Return the JavaScript to execute
+                return stop_js if stop_js else success
+            elif self.mode == 'full':
+                # For future implementation with PyTorch models
+                # Could implement interruption of model generation
+                return True
+            return False
+        except Exception as e:
+            print(f"❌ Stop speech failed: {e}")
+            return False
+
+# Initialize TTS manager
+@st.cache_resource
+def get_tts_manager():
+    """Initialize and cache TTS manager"""
+    return TTSManager()
+
 # Initialize enhanced bot
 @st.cache_resource
 def get_enhanced_bot():
-    """Initialize and cache the enhanced helpdesk bot"""
-    return EnhancedITHelpdeskBot()
+    """Initialize and cache the enhanced helpdesk bot with ChromaDB preloaded"""
+    try:
+        # Initialize bot
+        bot = EnhancedITHelpdeskBot()
+        
+        # Force ChromaDB initialization and knowledge base loading
+        if hasattr(bot, 'chroma_kb') and bot.chroma_kb:
+            # Get initial status to trigger any lazy loading
+            status = bot.chroma_kb.get_status()
+            
+            # If ChromaDB is empty, reload from knowledge base files
+            if status.get('collection_size', 0) == 0:
+                kb_dir = os.path.join("data", "kb")
+                if os.path.exists(kb_dir):
+                    reload_result = bot.chroma_kb.reload_from_directory(kb_dir)
+                    if reload_result.get('success'):
+                        print(f"✅ ChromaDB initialized with {reload_result.get('total_items', 0)} items")
+                    else:
+                        print(f"⚠️ ChromaDB reload warning: {reload_result.get('error', 'Unknown issue')}")
+            else:
+                print(f"✅ ChromaDB already loaded with {status.get('collection_size', 0)} items")
+        
+        # Also ensure legacy knowledge base is loaded
+        if hasattr(bot, 'knowledge_base') and not bot.knowledge_base:
+            bot.reload_knowledge_base()
+        
+        return bot
+        
+    except Exception as e:
+        print(f"❌ Error initializing bot: {e}")
+        # Return basic bot even if ChromaDB fails
+        return EnhancedITHelpdeskBot()
 
 # Language configuration
 LANGUAGES = {
@@ -155,6 +460,97 @@ def format_markdown_to_html(text: str) -> str:
     
     return text
 
+def stop_current_tts():
+    """Stop any currently playing TTS"""
+    try:
+        if st.session_state.get('tts_manager'):
+            tts_manager = st.session_state.tts_manager
+            result = tts_manager.stop_speech()
+            
+            if isinstance(result, str) and result.startswith('<script>'):
+                # Execute JavaScript to stop web speech
+                st.markdown(result, unsafe_allow_html=True)
+                st.session_state.tts_current_playing = None
+                st.session_state.tts_stop_requested = True
+                st.success("🔇 Voice stopped")
+                return True
+            elif result:
+                # System TTS stopped
+                st.session_state.tts_current_playing = None
+                st.session_state.tts_stop_requested = True
+                st.success("🔇 Voice stopped")
+                return True
+        return False
+    except Exception as e:
+        st.error(f"Failed to stop voice: {str(e)}")
+        return False
+
+def generate_and_play_tts(text, session_key):
+    """Generate TTS audio and store in session state for playback"""
+    if not (TTS_AVAILABLE or SIMPLE_TTS_AVAILABLE):
+        st.error("TTS libraries not available")
+        return
+    
+    # Check if stop was requested
+    if st.session_state.get('tts_stop_requested', False):
+        st.session_state.tts_stop_requested = False
+        return
+    
+    try:
+        if not st.session_state.tts_manager_initialized:
+            with st.spinner("Initializing TTS model..."):
+                tts_manager = TTSManager()
+                if tts_manager.is_initialized:
+                    st.session_state.tts_manager = tts_manager
+                    st.session_state.tts_manager_initialized = True
+                    st.session_state.tts_mode = tts_manager.mode
+                else:
+                    st.error("Failed to initialize TTS model")
+                    return
+        
+        # Set current playing state
+        st.session_state.tts_current_playing = session_key
+        
+        # Generate audio
+        tts_manager = st.session_state.get('tts_manager')
+        if tts_manager:
+            with st.spinner("Generating speech..."):
+                audio_result = tts_manager.text_to_speech(text)
+                if audio_result and not st.session_state.get('tts_stop_requested', False):
+                    tts_mode = st.session_state.get('tts_mode', 'unknown')
+                    
+                    if tts_mode == 'full':
+                        # Base64 audio data - use HTML audio player
+                        st.session_state[session_key] = audio_result
+                        audio_html = f"""
+                        <audio autoplay>
+                            <source src="data:audio/wav;base64,{audio_result}" type="audio/wav">
+                        </audio>
+                        """
+                        st.markdown(audio_html, unsafe_allow_html=True)
+                        st.success("🔊 Audio generated and playing!")
+                        
+                    elif tts_mode == 'simple':
+                        if audio_result.startswith('<script>'):
+                            # Web Speech API JavaScript
+                            st.markdown(audio_result, unsafe_allow_html=True)
+                            st.success("🔊 Using browser speech synthesis!")
+                        else:
+                            # Simple audio placeholder
+                            st.session_state[session_key] = audio_result
+                            st.success("🔊 System TTS activated!")
+                    
+                else:
+                    st.error("Failed to generate audio")
+        else:
+            st.error("TTS manager not initialized")
+            
+    except Exception as e:
+        st.error(f"TTS generation failed: {str(e)}")
+    finally:
+        # Clear playing state
+        st.session_state.tts_current_playing = None
+
 # Initialize session state
 def initialize_session_state():
     """Initialize all session state variables for enhanced functionality"""
@@ -180,7 +576,14 @@ def initialize_session_state():
         'current_thread_id': None,
         'show_thread_history': False,
         'selected_thread_id': None,
-        'thread_list': []
+        'thread_list': [],
+        # TTS settings
+        'tts_enabled': False,
+        'tts_auto_play': False,
+        'tts_manager_initialized': False,
+        'tts_mode': 'none',
+        'tts_current_playing': None,
+        'tts_stop_requested': False
     }
     
     for key, default_value in defaults.items():
@@ -477,8 +880,8 @@ def handle_user_input(user_input: str):
         # The bot will handle conversation history automatically through session_id
         pass
 
-async def process_bot_response():
-    """Process bot response asynchronously with enhanced conversation context"""
+def process_bot_response():
+    """Process bot response with enhanced conversation context"""
     if not st.session_state.processing_message or not st.session_state.pending_user_message:
         return
     
@@ -491,7 +894,7 @@ async def process_bot_response():
         session_id = st.session_state.session_id
         
         # Get response from enhanced bot with thread management
-        response, thread_id = await st.session_state.bot_instance.get_response(
+        response, thread_id = st.session_state.bot_instance.get_response(
             st.session_state.pending_user_message,
             st.session_state.current_username,
             st.session_state.current_thread_id
@@ -504,14 +907,26 @@ async def process_bot_response():
         
         # Add bot response with conversation metadata
         current_time = datetime.now()
+        timestamp_str = current_time.strftime("%H:%M")
+        
         st.session_state.messages.append({
             "role": "assistant",
             "content": response_content,
-            "timestamp": current_time.strftime("%H:%M"),
+            "timestamp": timestamp_str,
             "language": st.session_state.current_language,
             "thread_id": st.session_state.current_thread_id,
             "conversation_turn": len(st.session_state.messages) + 1
         })
+        
+        # Auto-play TTS if enabled
+        if st.session_state.tts_enabled and st.session_state.tts_auto_play and (TTS_AVAILABLE or SIMPLE_TTS_AVAILABLE):
+            try:
+                # Use the current message count as index for consistency
+                msg_index = len(st.session_state.messages) - 1
+                generate_and_play_tts(response_content, f"tts_audio_{msg_index}_{timestamp_str}")
+            except Exception as tts_e:
+                # Silently fail TTS to not interrupt chat flow
+                pass
         
         # Update conversation tracking
         st.session_state.last_activity = current_time
@@ -610,6 +1025,76 @@ def render_enhanced_sidebar():
             if st.button(label, use_container_width=True):
                 handle_user_input(message)
                 st.rerun()
+        
+        st.divider()
+        
+        # TTS Controls
+        st.markdown("### 🔊 Voice Settings")
+        
+        # Show TTS availability status
+        if TTS_AVAILABLE:
+            st.success("✅ Full AI Voice Available")
+        elif SIMPLE_TTS_AVAILABLE:
+            st.info("📢 Basic System Voice Available")
+        else:
+            st.error("❌ No Voice Features Available")
+        
+        # Show current TTS mode if initialized
+        if st.session_state.tts_manager_initialized:
+            tts_mode = st.session_state.get('tts_mode', 'unknown')
+            if tts_mode == 'full':
+                st.success("🤖 Using AI Voice Models")
+            elif tts_mode == 'simple':
+                st.info("💬 Using System Voice")
+        
+        if TTS_AVAILABLE or SIMPLE_TTS_AVAILABLE:
+            # TTS toggle
+            tts_enabled = st.checkbox(
+                "🔊 Enable Voice Reading", 
+                value=st.session_state.tts_enabled,
+                help="Enable text-to-speech for bot responses"
+            )
+            
+            if tts_enabled != st.session_state.tts_enabled:
+                st.session_state.tts_enabled = tts_enabled
+                if tts_enabled and not st.session_state.tts_manager_initialized:
+                    with st.spinner("Initializing voice models..."):
+                        tts_manager = TTSManager()
+                        if tts_manager.is_initialized:
+                            st.session_state.tts_manager = tts_manager
+                            st.session_state.tts_manager_initialized = True
+                            st.session_state.tts_mode = tts_manager.mode
+                    st.success("🔊 Voice ready!")
+                st.rerun()
+            
+            if st.session_state.tts_enabled:
+                # Auto-play toggle
+                st.session_state.tts_auto_play = st.checkbox(
+                    "🔄 Auto-play responses",
+                    value=st.session_state.tts_auto_play,
+                    help="Automatically read new bot responses aloud"
+                )
+                
+                # Stop voice button
+                st.markdown("---")
+                col1, col2 = st.columns([1, 1])
+                with col1:
+                    if st.button("🔇 Stop Voice", help="Stop current voice playback"):
+                        stop_current_tts()
+                        st.rerun()
+                
+                with col2:
+                    # Show current status
+                    if st.session_state.get('tts_current_playing'):
+                        st.success("🎵 Playing")
+                    else:
+                        st.info("🔇 Silent")
+                        
+        else:
+            st.info("🔊 Voice feature requires additional packages")
+            if st.button("📥 Install TTS Dependencies", help="Install transformers, torch, soundfile, datasets"):
+                st.code("pip install transformers torch soundfile datasets")
+                st.info("Or try: python install_tts.py")
         
         st.divider()
         
@@ -778,7 +1263,7 @@ def render_statistics_dashboard():
         st.error(f"Error loading statistics: {e}")
 
 def render_admin_panel():
-    """Render admin panel for system administrators"""
+    """Render admin panel for system administrators with ChromaDB management"""
     if not (st.session_state.user_role == "admin" and st.session_state.admin_mode):
         return
     
@@ -797,30 +1282,173 @@ def render_admin_panel():
         st.session_state.admin_mode = False
         st.rerun()
     
-    # Knowledge Base Upload Section
+    # Knowledge Base Management Section
     st.markdown("### 📚 Knowledge Base Management")
     
     # Show current knowledge base info
     bot = get_enhanced_bot()
     kb_info = bot.get_knowledge_base_info()
     
+    # Display Legacy KB Info
+    st.markdown("#### 📁 Legacy Knowledge Base")
+    legacy_kb = kb_info.get("legacy_kb", {})
+    
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("📁 KB Files", kb_info["total_files"])
+        st.metric("📁 KB Files", legacy_kb.get("total_files", 0))
     with col2:
-        st.metric("❓ FAQs", kb_info["total_faqs"])
+        st.metric("❓ FAQs", legacy_kb.get("total_faqs", 0))
     with col3:
-        st.metric("🔧 Guides", kb_info["total_troubleshooting_guides"])
+        st.metric("🔧 Guides", legacy_kb.get("total_troubleshooting_guides", 0))
     with col4:
-        st.metric("⚡ Quick Solutions", kb_info["total_quick_solutions"])
+        st.metric("⚡ Quick Solutions", legacy_kb.get("total_quick_solutions", 0))
     
-    st.info(f"**Version:** {kb_info['version']} | **Last Updated:** {kb_info['last_updated']}")
+    st.info(f"**Version:** {legacy_kb.get('version', 'unknown')} | **Last Updated:** {legacy_kb.get('last_updated', 'unknown')}")
+    
+    # Display ChromaDB Status
+    st.markdown("#### 🧠 ChromaDB Vector Database")
+    chroma_db = kb_info.get("chroma_db", {})
+    
+    if chroma_db.get("available", False):
+        # Status indicator with color coding
+        status = chroma_db.get("status", "unknown")
+        collection_size = chroma_db.get("collection_size", 0)
+        
+        if status == "ready" and collection_size > 0:
+            st.success(f"🟢 **ChromaDB Status: READY** - {collection_size} items loaded")
+        elif status == "ready" and collection_size == 0:
+            st.warning(f"🟡 **ChromaDB Status: EMPTY** - Database ready but no content loaded")
+        else:
+            st.error(f"🔴 **ChromaDB Status: {status.upper()}**")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("📊 Vector Items", collection_size)
+        with col2:
+            embedding_type = chroma_db.get("embedding_type", "unknown")
+            embedding_icon = "🤖" if "OpenAI" in embedding_type or "Azure" in embedding_type else "🧠"
+            st.metric(f"{embedding_icon} Embeddings", embedding_type)
+        with col3:
+            categories = chroma_db.get("categories", [])
+            st.metric("📂 Categories", len(categories))
+        with col4:
+            persist_dir = chroma_db.get("persist_directory", "unknown")
+            dir_name = os.path.basename(persist_dir) if persist_dir != "unknown" else "unknown"
+            st.metric("💾 Storage", dir_name)
+        
+        # Auto-reload ChromaDB if empty
+        if collection_size == 0:
+            st.info("💡 **ChromaDB is empty.** Would you like to load the knowledge base now?")
+            if st.button("🔄 Auto-Load Knowledge Base", key="auto_load_kb", type="primary"):
+                try:
+                    kb_dir = os.path.join("data", "kb")
+                    if hasattr(bot, 'chroma_kb') and bot.chroma_kb:
+                        with st.spinner("Loading knowledge base into ChromaDB..."):
+                            result = bot.chroma_kb.reload_from_directory(kb_dir)
+                            if result["success"]:
+                                st.success(f"✅ ChromaDB loaded: {result['total_items']} items from {result['files_loaded']} files")
+                                time.sleep(1)
+                                st.rerun()
+                            else:
+                                st.error(f"❌ ChromaDB loading failed: {result.get('error', 'Unknown error')}")
+                    else:
+                        st.error("❌ ChromaDB not available")
+                except Exception as e:
+                    st.error(f"❌ Error loading ChromaDB: {e}")
+        
+        # Show embedding configuration details
+        if chroma_db.get("use_openai_embeddings"):
+            provider = "Azure OpenAI" if chroma_db.get("use_azure_openai") else "OpenAI API"
+            model_name = chroma_db.get("model_name", "unknown")
+            st.success(f"🚀 **Using {provider} Embeddings:** {model_name}")
+        elif chroma_db.get("azure_openai_configured"):
+            st.info("💡 **Azure OpenAI configured** but no embedding deployment set. Add AZURE_OPENAI_EMBEDDING_DEPLOYMENT to use Azure OpenAI embeddings.")
+        elif chroma_db.get("openai_configured"):
+            st.info("💡 **OpenAI API configured.** OpenAI embeddings available as alternative.")
+        else:
+            st.info("� **Using ChromaDB default embeddings** (fast and reliable). Add OpenAI API key for cloud embeddings.")
+        
+        # Show categories if available
+        if categories:
+            st.info(f"**Categories:** {', '.join(categories)}")
+        
+        # ChromaDB detailed stats
+        with st.expander("🔍 ChromaDB Detailed Statistics"):
+            stats = chroma_db.get("stats", {})
+            if stats:
+                st.json(stats)
+            else:
+                # Show embedding configuration details
+                config_info = {
+                    "embedding_provider": chroma_db.get("embedding_provider", "unknown"),
+                    "embedding_type": chroma_db.get("embedding_type", "unknown"),
+                    "model_name": chroma_db.get("model_name", "unknown"),
+                    "use_openai_embeddings": chroma_db.get("use_openai_embeddings", False),
+                    "use_azure_openai": chroma_db.get("use_azure_openai", False),
+                    "azure_openai_configured": chroma_db.get("azure_openai_configured", False),
+                    "openai_configured": chroma_db.get("openai_configured", False)
+                }
+                st.json(config_info)
+        
+        # ChromaDB Management Actions
+        st.markdown("#### 🔧 ChromaDB Management")
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if st.button("🔄 Reload ChromaDB", key="reload_chroma_btn", help="Reload ChromaDB from knowledge base files"):
+                try:
+                    kb_dir = os.path.join("data", "kb")
+                    if hasattr(bot, 'chroma_kb') and bot.chroma_kb:
+                        result = bot.chroma_kb.reload_from_directory(kb_dir)
+                        if result["success"]:
+                            st.success(f"✅ ChromaDB reloaded: {result['total_items']} items from {result['files_loaded']} files")
+                        else:
+                            st.error(f"❌ ChromaDB reload failed: {result.get('error', 'Unknown error')}")
+                    else:
+                        st.error("❌ ChromaDB not available")
+                except Exception as e:
+                    st.error(f"❌ Error reloading ChromaDB: {e}")
+        
+        with col2:
+            if st.button("📊 Test Search", key="test_chroma_search", help="Test ChromaDB search functionality"):
+                try:
+                    test_query = "password reset"
+                    if hasattr(bot, 'chroma_kb') and bot.chroma_kb:
+                        results = bot.chroma_kb.search_knowledge_base(test_query, n_results=3)
+                        if results:
+                            st.success(f"✅ Search test successful: Found {len(results)} results for '{test_query}'")
+                            with st.expander("Search Results"):
+                                for i, result in enumerate(results, 1):
+                                    st.write(f"**{i}. {result.get('question', 'No question')}** (Score: {result.get('similarity_score', 0):.3f})")
+                        else:
+                            st.warning("⚠️ Search test returned no results")
+                    else:
+                        st.error("❌ ChromaDB not available for testing")
+                except Exception as e:
+                    st.error(f"❌ Error testing ChromaDB search: {e}")
+        
+        with col3:
+            persist_dir = chroma_db.get("persist_directory", "unknown")
+            st.text_input("💾 Persist Directory", value=persist_dir, disabled=True, key="chroma_persist_dir")
+    
+    else:
+        st.error("❌ ChromaDB Vector Database Not Available")
+        st.info("**Reasons might include:**")
+        st.info("- ChromaDB not installed (`pip install chromadb`)")
+        st.info("- SentenceTransformers not installed (`pip install sentence-transformers`)")
+        st.info("- Initialization error - check logs for details")
+        
+        error_msg = chroma_db.get("error", "Unknown error")
+        st.warning(f"**Error:** {error_msg}")
+    
+    # Knowledge Base Upload Section
+    st.markdown("#### 📤 Knowledge Base Upload")
     
     # Knowledge Base Upload
     uploaded_kb_file = st.file_uploader(
         "📚 Upload Knowledge Base File",
         type=['json'],
-        help="Upload a JSON file with FAQs, troubleshooting guides, or other knowledge base content",
+        help="Upload a JSON file with FAQs, troubleshooting guides, or other knowledge base content. Will be synced to both legacy KB and ChromaDB.",
         key="kb_upload_widget"
     )
     
@@ -859,26 +1487,27 @@ def render_admin_panel():
                             json.dump(json_data, f, indent=2, ensure_ascii=False)
                         
                         st.success(f"✅ Knowledge base uploaded successfully as {filename}")
-                        st.info("💡 Knowledge base will be automatically reloaded due to file monitoring")
                         
-                        # Force reload the knowledge base in the session
-                        if bot.reload_knowledge_base():
-                            st.success("🔄 Knowledge base reloaded successfully")
-                            # Set a flag to trigger rerun on next interaction instead of immediate rerun
+                        # Force reload both legacy and ChromaDB
+                        reload_success = bot.reload_knowledge_base()  # This will sync both
+                        
+                        if reload_success:
+                            st.success("🔄 Both legacy KB and ChromaDB reloaded successfully")
                             st.session_state.kb_upload_success = True
                         else:
-                            st.error("❌ Failed to reload knowledge base")
+                            st.warning("⚠️ File saved but reload had issues - check logs")
+                            
                     except Exception as e:
                         st.error(f"❌ Error uploading file: {e}")
             
             with col2:
-                if st.button("🔄 Reload Knowledge Base", key="reload_kb_btn"):
-                    if bot.reload_knowledge_base():
-                        st.success("✅ Knowledge base reloaded successfully!")
-                        # Use session state flag instead of immediate rerun to avoid DataCloneError
+                if st.button("🔄 Reload All Knowledge Bases", key="reload_all_kb_btn"):
+                    success = bot.reload_knowledge_base()  # This syncs both legacy and ChromaDB
+                    if success:
+                        st.success("✅ All knowledge bases reloaded successfully!")
                         st.session_state.kb_reload_success = True
                     else:
-                        st.error("❌ Failed to reload knowledge base")
+                        st.error("❌ Failed to reload knowledge bases")
         
         except json.JSONDecodeError:
             st.error("❌ Invalid JSON file")
@@ -943,7 +1572,7 @@ def render_chat_interface():
         })
     
     # Simple chat messages display
-    for message in st.session_state.messages:
+    for msg_index, message in enumerate(st.session_state.messages):
         if message["role"] == "user":
             # User message on the right
             col1, col2 = st.columns([1, 3])
@@ -989,6 +1618,33 @@ def render_chat_interface():
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
+                
+                # Add voice button for assistant messages
+                if st.session_state.tts_enabled and (TTS_AVAILABLE or SIMPLE_TTS_AVAILABLE):
+                    col_voice1, col_voice2, col_voice3, col_voice4 = st.columns([1, 1, 1, 7])
+                    with col_voice1:
+                        if st.button("🔊", key=f"tts_{msg_index}_{message.get('timestamp', 'unknown')}", 
+                                   help="Read this message aloud"):
+                            generate_and_play_tts(message['content'], f"tts_audio_{msg_index}_{message.get('timestamp', 'unknown')}")
+                    
+                    with col_voice2:
+                        if st.button("🔇", key=f"stop_{msg_index}_{message.get('timestamp', 'unknown')}", 
+                                   help="Stop voice playback"):
+                            stop_current_tts()
+                    
+                    with col_voice3:
+                        # Download audio button
+                        audio_key = f"tts_audio_{msg_index}_{message.get('timestamp', 'unknown')}"
+                        if audio_key in st.session_state:
+                            audio_data = st.session_state[audio_key]
+                            st.download_button(
+                                "💾",
+                                data=base64.b64decode(audio_data),
+                                file_name=f"response_{msg_index}_{message.get('timestamp', 'audio')}.wav",
+                                mime="audio/wav",
+                                help="Download audio file",
+                                key=f"download_{msg_index}_{message.get('timestamp', 'unknown')}"
+                            )
     
     # Show processing indicator with improved styling
     if st.session_state.processing_message:
@@ -1034,7 +1690,7 @@ def render_chat_interface():
     # Process response
     if st.session_state.processing_message and st.session_state.pending_user_message:
         try:
-            asyncio.run(process_bot_response())
+            process_bot_response()
             st.rerun()
         except Exception as e:
             st.error(f"Error: {e}")
@@ -1045,6 +1701,41 @@ def main():
     """Main application function with enhanced features and login"""
     # Initialize session state
     initialize_session_state()
+    
+    # Show loading indicator while initializing
+    if 'bot_initialized' not in st.session_state:
+        st.session_state.bot_initialized = False
+    
+    # Initialize bot early if not already done
+    if not st.session_state.bot_initialized:
+        with st.spinner("🚀 Initializing IT Helpdesk System..."):
+            try:
+                # Pre-initialize the bot and ChromaDB
+                bot = get_enhanced_bot()
+                
+                # Verify ChromaDB status
+                if hasattr(bot, 'chroma_kb') and bot.chroma_kb:
+                    status = bot.chroma_kb.get_status()
+                    collection_size = status.get('collection_size', 0)
+                    embedding_type = status.get('embedding_type', 'unknown')
+                    
+                    # Show initialization success message
+                    if collection_size > 0:
+                        st.success(f"✅ System Ready! ChromaDB loaded with {collection_size} items using {embedding_type} embeddings")
+                    else:
+                        st.warning("⚠️ ChromaDB initialized but empty. Knowledge base may need to be loaded.")
+                else:
+                    st.warning("⚠️ ChromaDB not available. System will use legacy knowledge base only.")
+                
+                st.session_state.bot_initialized = True
+                time.sleep(1)  # Brief pause to show success message
+                st.rerun()
+                
+            except Exception as e:
+                st.error(f"❌ System initialization error: {e}")
+                st.session_state.bot_initialized = True  # Continue anyway
+                time.sleep(2)
+                st.rerun()
     
     # Show login screen if not logged in
     if not st.session_state.is_logged_in:

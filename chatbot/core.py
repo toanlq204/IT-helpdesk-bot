@@ -117,6 +117,15 @@ from functions.helpdesk_functions import (
 # Import conversation thread management
 from conversation_threads import thread_manager, ConversationThread
 
+# Import ChromaDB Knowledge Base Manager
+try:
+    from .chroma_kb_manager import ChromaKnowledgeBaseManager
+    CHROMA_KB_AVAILABLE = True
+except ImportError:
+    CHROMA_KB_AVAILABLE = False
+    logger.warning("ChromaDB Knowledge Base Manager not available")
+    ChromaKnowledgeBaseManager = None
+
 
 class EnhancedITHelpdeskBot:
     """
@@ -218,7 +227,28 @@ class EnhancedITHelpdeskBot:
         # Load system prompt
         self.system_prompt = self._load_enhanced_system_prompt()
         
-        # Load knowledge base
+        # Initialize ChromaDB Knowledge Base Manager
+        self.chroma_kb = None
+        if CHROMA_KB_AVAILABLE and ChromaKnowledgeBaseManager:
+            try:
+                print("🔧 Initializing ChromaDB Knowledge Base...")
+                self.chroma_kb = ChromaKnowledgeBaseManager()
+                
+                if self.chroma_kb.is_initialized:
+                    print("✅ ChromaDB Knowledge Base initialized successfully")
+                    # Load initial knowledge base into ChromaDB
+                    self._initialize_chroma_knowledge_base()
+                else:
+                    print("❌ ChromaDB Knowledge Base failed to initialize")
+                    self.chroma_kb = None
+            except Exception as e:
+                print(f"❌ Error initializing ChromaDB: {e}")
+                logger.error(f"Error initializing ChromaDB: {e}")
+                self.chroma_kb = None
+        else:
+            print("❌ ChromaDB not available - using legacy knowledge base")
+        
+        # Load legacy knowledge base (fallback)
         self.knowledge_base = self._load_knowledge_base()
         
         # Initialize file monitoring for automatic reload
@@ -262,6 +292,39 @@ class EnhancedITHelpdeskBot:
     def __del__(self):
         """Cleanup when bot instance is destroyed"""
         self._stop_file_monitoring()
+    
+    def _initialize_chroma_knowledge_base(self):
+        """Initialize ChromaDB with existing knowledge base files"""
+        if not self.chroma_kb or not self.chroma_kb.is_initialized:
+            return
+        
+        try:
+            kb_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "kb")
+            
+            if os.path.exists(kb_dir):
+                logger.info("🔄 Loading knowledge base into ChromaDB...")
+                result = self.chroma_kb.reload_from_directory(kb_dir)
+                
+                if result["success"]:
+                    logger.info(f"✅ ChromaDB loaded: {result['files_loaded']} files, {result['total_items']} items")
+                else:
+                    logger.error(f"❌ Failed to load ChromaDB: {result.get('error', 'Unknown error')}")
+            else:
+                logger.warning("Knowledge base directory not found for ChromaDB initialization")
+                
+        except Exception as e:
+            logger.error(f"Error initializing ChromaDB knowledge base: {e}")
+    
+    def get_chroma_status(self) -> Dict[str, Any]:
+        """Get ChromaDB status information"""
+        if not self.chroma_kb:
+            return {
+                "available": False,
+                "status": "not_initialized",
+                "error": "ChromaDB not available"
+            }
+        
+        return self.chroma_kb.get_status()
     
     def _load_knowledge_base(self) -> Dict[str, Any]:
         """Load all knowledge base files from data/kb folder"""
@@ -368,7 +431,7 @@ class EnhancedITHelpdeskBot:
             return {"faqs": [], "knowledge_base": {}}
     
     def reload_knowledge_base(self) -> bool:
-        """Reload knowledge base from all files in data/kb folder (thread-safe)"""
+        """Reload knowledge base from all files in data/kb folder (thread-safe) with ChromaDB sync"""
         try:
             # Use a lock to prevent concurrent reloads
             if not hasattr(self, '_reload_lock'):
@@ -376,8 +439,24 @@ class EnhancedITHelpdeskBot:
                 
             with self._reload_lock:
                 old_count = len(self.knowledge_base.get("faqs", []))
+                
+                # Reload legacy knowledge base
                 self.knowledge_base = self._load_knowledge_base()
                 new_count = len(self.knowledge_base.get("faqs", []))
+                
+                # Sync with ChromaDB if available
+                if self.chroma_kb and self.chroma_kb.is_initialized:
+                    try:
+                        kb_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "kb")
+                        chroma_result = self.chroma_kb.reload_from_directory(kb_dir)
+                        
+                        if chroma_result["success"]:
+                            logger.info(f"✅ ChromaDB reloaded: {chroma_result['total_items']} items")
+                        else:
+                            logger.error(f"❌ ChromaDB reload failed: {chroma_result.get('error')}")
+                            
+                    except Exception as e:
+                        logger.error(f"Error syncing with ChromaDB during reload: {e}")
                 
                 if new_count != old_count:
                     logger.info(f"Knowledge base reloaded: {old_count} → {new_count} FAQs")
@@ -429,18 +508,41 @@ class EnhancedITHelpdeskBot:
             }
     
     def get_knowledge_base_info(self) -> Dict[str, Any]:
-        """Get information about the current knowledge base"""
+        """Get comprehensive information about the current knowledge base including ChromaDB status"""
         kb_meta = self.knowledge_base.get("knowledge_base", {})
-        return {
-            "total_files": kb_meta.get("total_files", 0),
-            "total_faqs": len(self.knowledge_base.get("faqs", [])),
-            "total_troubleshooting_guides": len(self.knowledge_base.get("troubleshooting_guides", {})),
-            "total_quick_solutions": len(self.knowledge_base.get("quick_solutions", {})),
-            "version": kb_meta.get("version", "unknown"),
-            "last_updated": kb_meta.get("last_updated", "unknown"),
-            "categories": kb_meta.get("categories", []),
-            "language_support": kb_meta.get("language_support", [])
+        
+        # Base legacy information
+        info = {
+            "legacy_kb": {
+                "total_files": kb_meta.get("total_files", 0),
+                "total_faqs": len(self.knowledge_base.get("faqs", [])),
+                "total_troubleshooting_guides": len(self.knowledge_base.get("troubleshooting_guides", {})),
+                "total_quick_solutions": len(self.knowledge_base.get("quick_solutions", {})),
+                "version": kb_meta.get("version", "unknown"),
+                "last_updated": kb_meta.get("last_updated", "unknown"),
+                "categories": kb_meta.get("categories", []),
+                "language_support": kb_meta.get("language_support", [])
+            }
         }
+        
+        # Add ChromaDB information if available
+        if self.chroma_kb:
+            info["chroma_db"] = self.chroma_kb.get_status()
+            
+            if self.chroma_kb.is_initialized:
+                try:
+                    info["chroma_db"]["stats"] = self.chroma_kb.get_collection_stats()
+                    info["chroma_db"]["categories"] = self.chroma_kb.get_categories()
+                except Exception as e:
+                    info["chroma_db"]["stats_error"] = str(e)
+        else:
+            info["chroma_db"] = {
+                "available": False,
+                "status": "not_available",
+                "error": "ChromaDB not initialized"
+            }
+        
+        return info
     
     def _load_enhanced_system_prompt(self) -> str:
         """Load enhanced system prompt with multi-language and role awareness"""
@@ -510,8 +612,45 @@ RESPONSE GUIDELINES:
 Current datetime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 """
     
-    def search_knowledge_base(self, query: str, max_results: int = 3) -> List[Dict[str, Any]]:
-        """Search knowledge base for relevant FAQs"""
+    def search_knowledge_base(self, query: str, max_results: int = 3, category_filter: str = None) -> List[Dict[str, Any]]:
+        """
+        Search knowledge base for relevant FAQs using ChromaDB (with legacy fallback)
+        
+        Args:
+            query: Search query
+            max_results: Maximum number of results to return
+            category_filter: Optional category filter
+            
+        Returns:
+            List of relevant FAQs with similarity scores
+        """
+        # Try ChromaDB first (semantic search)
+        if self.chroma_kb and self.chroma_kb.is_initialized:
+            try:
+                logger.info(f"🔍 Searching ChromaDB for: '{query[:50]}...'")
+                results = self.chroma_kb.search_knowledge_base(
+                    query=query,
+                    n_results=max_results,
+                    category_filter=category_filter,
+                    similarity_threshold=0.3  # Lower threshold for better recall
+                )
+                
+                if results:
+                    logger.info(f"✅ ChromaDB found {len(results)} relevant items")
+                    return results
+                else:
+                    logger.info("ℹ️ No relevant items found in ChromaDB, trying legacy search")
+                    
+            except Exception as e:
+                logger.error(f"Error searching ChromaDB: {e}")
+                logger.info("🔄 Falling back to legacy knowledge base search")
+        
+        # Fallback to legacy search
+        logger.info(f"🔍 Using legacy search for: '{query[:50]}...'")
+        return self._legacy_search_knowledge_base(query, max_results, category_filter)
+    
+    def _legacy_search_knowledge_base(self, query: str, max_results: int = 3, category_filter: str = None) -> List[Dict[str, Any]]:
+        """Legacy keyword-based knowledge base search (fallback)"""
         if not self.knowledge_base or not self.knowledge_base.get("faqs"):
             return []
         
@@ -520,6 +659,10 @@ Current datetime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         scored_results = []
         
         for faq in faqs:
+            # Skip if category filter doesn't match
+            if category_filter and faq.get("category", "").lower() != category_filter.lower():
+                continue
+                
             score = 0
             
             # Check question similarity
@@ -545,7 +688,12 @@ Current datetime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             score += len(common_words) * 5
             
             if score > 10:  # Minimum relevance threshold
-                scored_results.append((score, faq))
+                # Add similarity score and rank for consistency with ChromaDB results
+                result_faq = faq.copy()
+                result_faq["similarity_score"] = round(score / 100, 3)  # Normalize to 0-1
+                result_faq["source_file"] = "legacy"
+                result_faq["rank"] = len(scored_results) + 1
+                scored_results.append((score, result_faq))
         
         # Sort by score and return top results
         scored_results.sort(key=lambda x: x[0], reverse=True)
@@ -568,7 +716,7 @@ Current datetime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         return None
     
     def format_knowledge_base_response(self, faqs: List[Dict[str, Any]], query: str) -> str:
-        """Format knowledge base search results into a helpful response"""
+        """Format knowledge base search results into a helpful response (supports both ChromaDB and legacy results)"""
         if not faqs:
             return None
         
@@ -582,6 +730,10 @@ Current datetime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 ⏱️ **Estimated time:** {faq.get('resolution_time_minutes', 15)} minutes
 📂 **Category:** {faq.get('category', 'general').title()}"""
+            
+            # Add similarity score if available (ChromaDB)
+            if 'similarity_score' in faq:
+                response += f"\n🎯 **Relevance:** {int(faq['similarity_score'] * 100)}%"
             
             if faq.get('priority') == 'high' or faq.get('priority') == 'critical':
                 response += f"\n🚨 **Priority:** {faq.get('priority', 'medium').title()}"
@@ -599,7 +751,17 @@ Current datetime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
                 if len(answer) > 200:
                     answer = answer[:197] + "..."
                 response += f"{answer}\n"
-                response += f"⏱️ *{faq.get('resolution_time_minutes', 15)} min* | 📂 *{faq.get('category', 'general').title()}*\n\n"
+                
+                # Add metadata line
+                metadata_parts = []
+                metadata_parts.append(f"⏱️ {faq.get('resolution_time_minutes', 15)} min")
+                metadata_parts.append(f"📂 {faq.get('category', 'general').title()}")
+                
+                # Add similarity score if available (ChromaDB)
+                if 'similarity_score' in faq:
+                    metadata_parts.append(f"🎯 {int(faq['similarity_score'] * 100)}%")
+                
+                response += f"*{' | '.join(metadata_parts)}*\n\n"
             
             response += "💬 **Want more details on any solution?** Ask me about a specific item, or I can create a support ticket if needed."
             return response
@@ -1126,10 +1288,20 @@ CONVERSATION GUIDELINES:
                     break
         
         elif intent == "reset_password":
-            # Extract username
-            user_match = re.search(r"(?:user|username)[\s:]*(\w+)", user_input, re.IGNORECASE)
-            if user_match:
-                params["target_username"] = user_match.group(1)
+            # Extract username (including usernames with dots like john.doe)
+            # Try multiple patterns to catch different formats
+            patterns = [
+                r"(?:user|username)[\s:]+([a-zA-Z0-9._-]+)",  # "user john.doe" or "username: john.doe"
+                r"for\s+([a-zA-Z0-9._-]+)",                    # "reset password for john.doe"
+                r"password\s+for\s+([a-zA-Z0-9._-]+)",        # "reset john.doe password"
+                r"([a-zA-Z0-9._-]+)(?:'s)?\s+password"        # "john.doe's password"
+            ]
+            
+            for pattern in patterns:
+                user_match = re.search(pattern, user_input, re.IGNORECASE)
+                if user_match:
+                    params["target_username"] = user_match.group(1)
+                    break
         
         return params
     
@@ -1159,7 +1331,7 @@ CONVERSATION GUIDELINES:
             error_msg = get_localized_text("error", language)
             return f"{error_msg}: {str(e)}"
     
-    async def get_response(self, user_input: str, username: str = "user", 
+    def get_response(self, user_input: str, username: str = "user", 
                          thread_id: str = None) -> tuple[str, str]:
         """
         Get enhanced response with multi-language and thread-based conversations
@@ -1213,7 +1385,8 @@ CONVERSATION GUIDELINES:
                         model=self.deployment_name,
                         messages=messages,
                         max_tokens=1000,
-                        temperature=0.7
+                        temperature=0.7,
+                        timeout=30  # Add 30 second timeout
                     )
                     
                     bot_response = response.choices[0].message.content

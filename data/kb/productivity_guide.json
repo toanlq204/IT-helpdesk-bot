@@ -1,0 +1,227 @@
+{
+  "knowledge_base": {
+    "version": "5.0",
+    "last_updated": "2025-08-09",
+    "categories": ["productivity", "collaboration", "training", "automation", "accessibility"],
+    "language_support": ["en"],
+    "total_articles": 20,
+    "search_enabled": true,
+    "auto_suggest": true,
+    "specialization": "workplace_productivity"
+  },
+  "faqs": [
+    {
+      "id": 301,
+      "question": "How to automate repetitive tasks in Office applications?",
+      "answer": "To automate Office tasks:\n1. Use Excel macros for data processing\n2. Create Outlook rules for email management\n3. Use Power Automate for workflow automation\n4. Set up templates for common documents\n5. Use Quick Steps in Outlook for frequent actions\n6. Explore Power Apps for custom solutions\n7. Contact IT for advanced automation needs",
+      "category": "productivity",
+      "priority": "medium",
+      "keywords": ["automation", "macros", "power", "automate", "workflow", "templates", "excel", "outlook"],
+      "related_tickets": [],
+      "resolution_time_minutes": 30
+    },
+    {
+      "id": 302,
+      "question": "SharePoint document collaboration best practices",
+      "answer": "For effective SharePoint collaboration:\n1. Use co-authoring for real-time editing\n2. Set proper permissions and access levels\n3. Use version history to track changes\n4. Organize documents in logical folder structure\n5. Use metadata tags for easier searching\n6. Set up alerts for important document changes\n7. Train team on SharePoint features",
+      "category": "collaboration",
+      "priority": "medium",
+      "keywords": ["sharepoint", "collaboration", "co-authoring", "permissions", "version", "metadata"],
+      "related_tickets": [],
+      "resolution_time_minutes": 25
+    },
+    {
+      "id": 303,
+      "question": "Video conferencing etiquette and troubleshooting",
+      "answer": "For better video meetings:\n1. Test audio/video before important meetings\n2. Use mute when not speaking\n3. Have good lighting and camera positioning\n4. Use headphones to reduce echo\n5. Close unnecessary applications for better performance\n6. Have phone backup ready\n7. Learn keyboard shortcuts for common actions",
+      "category": "collaboration",
+      "priority": "medium",
+      "keywords": ["video", "conferencing", "meetings", "audio", "mute", "lighting", "performance"],
+      "related_tickets": [],
+      "resolution_time_minutes": 15
+    },
+    {
+      "id": 304,
+      "question": "Digital accessibility features and accommodations",
+      "answer": "For digital accessibility:\n1. Use built-in Windows accessibility tools\n2. Enable high contrast mode for better visibility\n3. Use screen readers for visual impairments\n4. Adjust font sizes and scaling\n5. Use voice recognition software\n6. Enable closed captions in video content\n7. Contact IT for specialized accessibility software",
+      "category": "accessibility",
+      "priority": "high",
+      "keywords": ["accessibility", "screen", "reader", "contrast", "font", "voice", "recognition", "captions"],
+      "related_tickets": [],
+      "resolution_time_minutes": 20
+    },
+    {
+      "id": 305,
+      "question": "Time management and calendar optimization",
+      "answer": "For better calendar management:\n1. Use color coding for different types of meetings\n2. Set up automatic meeting scheduling with Bookings\n3. Block focus time for deep work\n4. Use calendar analytics to identify patterns\n5. Set appropriate default meeting lengths\n6. Enable meeting room booking integration\n7. Use scheduling assistant for large meetings",
+      "category": "productivity",
+      "priority": "low",
+      "keywords": ["calendar", "time", "management", "scheduling", "meetings", "focus", "analytics"],
+      "related_tickets": [],
+      "resolution_time_minutes": 15
+    },
+    {
+      "id": 306,
+      "question": "Data visualization and reporting tools",
+      "answer": "For data visualization:\n1. Use Excel charts and graphs for basic visualization\n2. Explore Power BI for advanced analytics\n3. Create automated reports with data connections\n4. Use conditional formatting for data insights\n5. Learn pivot tables for data summarization\n6. Consider Tableau or other specialized tools\n7. Request training on data analysis tools",
+      "category": "productivity",
+      "priority": "medium",
+      "keywords": ["data", "visualization", "reporting", "excel", "power", "bi", "charts", "analytics"],
+      "related_tickets": [],
+      "resolution_time_minutes": 45
+    },
+    {
+      "id": 307,
+      "question": "Knowledge management and documentation standards",
+      "answer": "For effective knowledge management:\n1. Use consistent document naming conventions\n2. Create searchable knowledge base articles\n3. Maintain up-to-date process documentation\n4. Use wikis for collaborative knowledge sharing\n5. Implement document review and approval workflows\n6. Tag documents with relevant keywords\n7. Archive outdated information regularly",
+      "category": "productivity",
+      "priority": "medium",
+      "keywords": ["knowledge", "management", "documentation", "naming", "conventions", "wikis", "workflows"],
+      "related_tickets": [],
+      "resolution_time_minutes": 35
+    },
+    {
+      "id": 308,
+      "question": "Project management software and tools",
+      "answer": "For project management:\n1. Use Microsoft Project for complex projects\n2. Try Planner for simple task management\n3. Implement Kanban boards for visual workflow\n4. Set up automated progress tracking\n5. Use Gantt charts for timeline visualization\n6. Integrate with Teams for collaboration\n7. Request training on project management tools",
+      "category": "productivity",
+      "priority": "medium",
+      "keywords": ["project", "management", "planner", "kanban", "gantt", "tracking", "timeline"],
+      "related_tickets": [],
+      "resolution_time_minutes": 40
+    },
+    {
+      "id": 309,
+      "question": "Digital note-taking and information organization",
+      "answer": "For better note-taking:\n1. Use OneNote for structured digital notes\n2. Organize notes with sections and pages\n3. Use tags for easy searching and filtering\n4. Enable audio recording during meetings\n5. Share notebooks for team collaboration\n6. Sync across all devices\n7. Use templates for consistent formatting",
+      "category": "productivity",
+      "priority": "low",
+      "keywords": ["notes", "onenote", "organization", "tags", "audio", "recording", "sync", "templates"],
+      "related_tickets": [],
+      "resolution_time_minutes": 20
+    },
+    {
+      "id": 310,
+      "question": "Workflow automation with Power Platform",
+      "answer": "For Power Platform automation:\n1. Use Power Automate for business processes\n2. Create Power Apps for custom business solutions\n3. Build Power BI dashboards for data insights\n4. Connect to various data sources and services\n5. Start with templates for common scenarios\n6. Test thoroughly before deployment\n7. Request Power Platform training",
+      "category": "automation",
+      "priority": "medium",
+      "keywords": ["power", "platform", "automate", "apps", "bi", "workflow", "templates", "training"],
+      "related_tickets": [],
+      "resolution_time_minutes": 60
+    },
+    {
+      "id": 311,
+      "question": "Digital wellness and ergonomics",
+      "answer": "For digital wellness:\n1. Take regular breaks using the 20-20-20 rule\n2. Adjust monitor height and distance\n3. Use proper keyboard and mouse positioning\n4. Enable blue light filters\n5. Practice good posture habits\n6. Use standing desk options when available\n7. Report ergonomic concerns to facilities",
+      "category": "training",
+      "priority": "medium",
+      "keywords": ["wellness", "ergonomics", "breaks", "monitor", "posture", "blue", "light"],
+      "related_tickets": [],
+      "resolution_time_minutes": 10
+    },
+    {
+      "id": 312,
+      "question": "Advanced Excel functions and formulas",
+      "answer": "For advanced Excel use:\n1. Learn VLOOKUP and INDEX/MATCH functions\n2. Use pivot tables for data analysis\n3. Master conditional formatting\n4. Explore array formulas\n5. Use data validation for input control\n6. Create dynamic charts and dashboards\n7. Request Excel advanced training",
+      "category": "training",
+      "priority": "medium",
+      "keywords": ["excel", "formulas", "vlookup", "pivot", "tables", "conditional", "formatting"],
+      "related_tickets": [],
+      "resolution_time_minutes": 90
+    },
+    {
+      "id": 313,
+      "question": "Cloud file storage optimization",
+      "answer": "For cloud storage optimization:\n1. Use OneDrive Files On-Demand to save local space\n2. Organize files with consistent folder structure\n3. Use sharing permissions appropriately\n4. Enable version history for important files\n5. Clean up old and duplicate files regularly\n6. Monitor storage usage and quotas\n7. Use sync settings to control what syncs locally",
+      "category": "productivity",
+      "priority": "medium",
+      "keywords": ["cloud", "storage", "onedrive", "files", "demand", "sharing", "version", "sync"],
+      "related_tickets": [],
+      "resolution_time_minutes": 25
+    },
+    {
+      "id": 314,
+      "question": "Digital signature and document workflow",
+      "answer": "For digital signatures:\n1. Use Adobe Sign for document signing\n2. Set up signature workflows in SharePoint\n3. Create approval processes with Power Automate\n4. Use DocuSign for external parties\n5. Maintain audit trails for compliance\n6. Train users on digital signature processes\n7. Contact legal for signature policy guidance",
+      "category": "productivity",
+      "priority": "medium",
+      "keywords": ["digital", "signature", "adobe", "sign", "docusign", "workflow", "approval", "compliance"],
+      "related_tickets": [],
+      "resolution_time_minutes": 30
+    },
+    {
+      "id": 315,
+      "question": "Communication and messaging best practices",
+      "answer": "For effective digital communication:\n1. Use appropriate channels for different types of messages\n2. Keep emails concise and action-oriented\n3. Use @mentions in Teams for urgent items\n4. Set status messages to indicate availability\n5. Use threaded conversations for complex topics\n6. Respect time zones for global teams\n7. Follow company communication guidelines",
+      "category": "collaboration",
+      "priority": "medium",
+      "keywords": ["communication", "messaging", "teams", "email", "status", "threaded", "time", "zones"],
+      "related_tickets": [],
+      "resolution_time_minutes": 15
+    }
+  ],
+  "productivity_tips": [
+    {
+      "id": "PT001",
+      "category": "time_management",
+      "tip": "Use the Pomodoro Technique: 25 minutes focused work, 5 minute break",
+      "tools": ["Forest app", "Be Focused", "Built-in timers"],
+      "impact": "Increased focus and reduced burnout"
+    },
+    {
+      "id": "PT002",
+      "category": "email_management", 
+      "tip": "Process emails using the 2-minute rule: if it takes less than 2 minutes, do it now",
+      "tools": ["Outlook rules", "Quick Steps", "Categories"],
+      "impact": "Reduced email backlog and faster response times"
+    },
+    {
+      "id": "PT003",
+      "category": "file_organization",
+      "tip": "Use the PARA method: Projects, Areas, Resources, Archive",
+      "tools": ["OneDrive", "SharePoint", "File naming conventions"],
+      "impact": "Easier file retrieval and better organization"
+    },
+    {
+      "id": "PT004",
+      "category": "meeting_efficiency",
+      "tip": "Start meetings with agenda and end with clear action items",
+      "tools": ["OneNote meeting templates", "Teams meeting notes", "Follow-up tasks"],
+      "impact": "More productive meetings and better follow-through"
+    },
+    {
+      "id": "PT005",
+      "category": "keyboard_shortcuts",
+      "tip": "Learn top 10 keyboard shortcuts for your most-used applications",
+      "tools": ["Shortcut cheat sheets", "Practice apps", "Custom shortcuts"],
+      "impact": "Significantly faster task completion"
+    }
+  ],
+  "training_resources": [
+    {
+      "id": "TR001",
+      "title": "Microsoft 365 Fundamentals",
+      "duration": "4 hours",
+      "format": "Online self-paced",
+      "target_audience": "All employees",
+      "learning_outcomes": ["Basic Office 365 navigation", "Email and calendar management", "File sharing basics"]
+    },
+    {
+      "id": "TR002",
+      "title": "Advanced Excel for Data Analysis",
+      "duration": "8 hours",
+      "format": "Instructor-led workshop",
+      "target_audience": "Analysts and managers",
+      "learning_outcomes": ["Complex formulas", "Pivot tables", "Data visualization", "Macros"]
+    },
+    {
+      "id": "TR003",
+      "title": "Teams Collaboration Mastery", 
+      "duration": "2 hours",
+      "format": "Virtual workshop",
+      "target_audience": "All remote workers",
+      "learning_outcomes": ["Advanced Teams features", "Meeting best practices", "Channel management"]
+    }
+  ]
+}

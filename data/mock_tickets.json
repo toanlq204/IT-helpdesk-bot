@@ -797,6 +797,22 @@
       ]
     },
     {
+      "username": "user",
+      "role": "manager", 
+      "department": "General",
+      "email": "user@company.com",
+      "preferred_language": "en",
+      "permissions": [
+        "create_ticket",
+        "view_own_tickets", 
+        "update_own_tickets",
+        "view_department_tickets",
+        "approve_requests",
+        "password_reset",
+        "basic_access"
+      ]
+    },
+    {
       "username": "robert.manager",
       "role": "manager",
       "department": "Legal",
