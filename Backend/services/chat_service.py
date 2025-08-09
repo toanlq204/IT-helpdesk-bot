@@ -3,7 +3,6 @@ import openai
 import os
 import json
 from services.ticket_service import TicketService
-from db.chroma_config import get_collection
 
 class ChatService:
     def __init__(self, chat_data_path: str = "storage/data/messages.json", ticket_service: TicketService = TicketService()):
@@ -39,20 +38,8 @@ class ChatService:
 
     def prepare_messages(self, messages: list) -> list:
         default_messages = self.load_data_messages()
-        enhanced_context = get_collection().query(
-            query_texts=[messages[-1]["content"]],
-            n_results=1
-        )
-        if enhanced_context['documents']:
-            context_message = {
-            "role": "system",
-            "content": enhanced_context['documents'][0]
-            }
-            messages = default_messages + [context_message] + messages
-        else:
-            messages = default_messages + messages
+        messages = default_messages + messages
         return messages
-
     #sk-DRKoljlUoP4FtPCOBVy71Q
     def get_response(self, messages: list) -> str:
         
@@ -98,7 +85,6 @@ class ChatService:
                 }
             ]
         )
-
         tool_calls = response.choices[0].message.tool_calls
         if tool_calls is not None:
             for tool_call in tool_calls:
