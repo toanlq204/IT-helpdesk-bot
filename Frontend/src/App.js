@@ -3,16 +3,21 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { 
   Box, 
-  AppBar, 
-  Toolbar, 
   Typography, 
   IconButton,
   Select,
   MenuItem,
   FormControl,
-  InputLabel
+  InputLabel,
+  Button
 } from '@mui/material';
-import { Chat as ChatIcon, BugReport as BugReportIcon } from '@mui/icons-material';
+import { 
+  Chat as ChatIcon, 
+  BugReport as BugReportIcon,
+  Menu as MenuIcon,
+  Add as AddIcon,
+  Settings as SettingsIcon
+} from '@mui/icons-material';
 import ConversationList from './components/ConversationList';
 import ChatWindow from './components/ChatWindow';
 import FileUpload from './components/FileUpload';
@@ -21,12 +26,27 @@ import { conversationService } from './services/api';
 
 const theme = createTheme({
   palette: {
+    mode: 'light',
     primary: {
-      main: '#1976d2',
+      main: '#10a37f',
     },
     secondary: {
-      main: '#dc004e',
+      main: '#6b7280',
     },
+    background: {
+      default: '#ffffff',
+      paper: '#f7f7f8',
+    },
+    text: {
+      primary: '#374151',
+      secondary: '#6b7280',
+    },
+  },
+  typography: {
+    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  },
+  shape: {
+    borderRadius: 8,
   },
 });
 
@@ -36,6 +56,7 @@ function App() {
   const [showTicketManager, setShowTicketManager] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [selectedRole, setSelectedRole] = useState('User');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     loadConversations();
@@ -81,84 +102,142 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box className="h-screen flex flex-col">
-        {/* Header */}
-        <AppBar position="static" className="shadow-md">
-          <Toolbar>
-            <ChatIcon className="mr-2" />
-            <Typography variant="h6" component="div" className="flex-grow">
-              IT HelpDesk Chatbot
-            </Typography>
-            
-            {/* Role Selection Dropdown */}
-            <FormControl variant="filled" size="small" className="mr-2">
-              <InputLabel id="role-select-label" sx={{ color: 'white' }}>
-                Role
-              </InputLabel>
-              <Select
-                labelId="role-select-label"
-                value={selectedRole}
-                onChange={handleRoleChange}
-                sx={{
-                  color: 'white',
-                  '.MuiSelect-icon': { color: 'white' },
-                  '.MuiFilledInput-underline:before': { borderBottomColor: 'rgba(255, 255, 255, 0.42)' },
-                  '.MuiFilledInput-underline:hover:before': { borderBottomColor: 'white' },
-                  '.MuiFilledInput-underline:after': { borderBottomColor: 'white' }
-                }}
-              >
-                <MenuItem value="Admin">Admin</MenuItem>
-                <MenuItem value="User">User</MenuItem>
-                <MenuItem value="Officer">Officer</MenuItem>
-              </Select>
-            </FormControl>
-            
+      <Box className="h-screen flex bg-gray-50">
+        {/* Left Sidebar */}
+        <Box 
+          className={`${sidebarCollapsed ? 'w-0' : 'w-80'} transition-all duration-300 ease-in-out bg-gray-900 text-white flex flex-col overflow-hidden`}
+          sx={{ 
+            borderRight: '1px solid #374151',
+            minWidth: sidebarCollapsed ? 0 : 320
+          }}
+        >
+          {!sidebarCollapsed && (
+            <>
+              {/* Sidebar Header */}
+              <Box className="p-4 border-b border-gray-700">
+                <Box className="flex items-center justify-between mb-4">
+                  <Typography variant="h6" className="font-semibold text-white">
+                    IT HelpDesk
+                  </Typography>
+                  <IconButton 
+                    size="small" 
+                    onClick={() => setSidebarCollapsed(true)}
+                    sx={{ color: 'white' }}
+                  >
+                    <MenuIcon />
+                  </IconButton>
+                </Box>
+                
+                <Button
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  onClick={handleNewConversation}
+                  fullWidth
+                  sx={{
+                    borderColor: '#374151',
+                    color: 'white',
+                    '&:hover': {
+                      borderColor: '#6b7280',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                    }
+                  }}
+                >
+                  New Chat
+                </Button>
+              </Box>
+
+              {/* File Upload Section */}
+              <Box className="p-4 border-b border-gray-700">
+                <FileUpload
+                  onFileUpload={handleFileUpload}
+                  uploadedFiles={uploadedFiles}
+                />
+              </Box>
+              
+              {/* Conversations List */}
+              <Box className="flex-1 overflow-y-auto">
+                <ConversationList
+                  conversations={conversations}
+                  selectedConversation={selectedConversation}
+                  onConversationSelect={handleConversationSelect}
+                  onNewConversation={handleNewConversation}
+                  onRefresh={loadConversations}
+                />
+              </Box>
+
+              {/* Sidebar Footer */}
+              <Box className="p-4 border-t border-gray-700">
+                <Box className="flex items-center justify-between mb-2">
+                  <FormControl variant="outlined" size="small" fullWidth>
+                    <InputLabel sx={{ color: '#9ca3af' }}>Role</InputLabel>
+                    <Select
+                      value={selectedRole}
+                      onChange={handleRoleChange}
+                      label="Role"
+                      sx={{
+                        color: 'white',
+                        '.MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#374151'
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#6b7280'
+                        },
+                        '.MuiSelect-icon': { color: '#9ca3af' }
+                      }}
+                    >
+                      <MenuItem value="Admin">Admin</MenuItem>
+                      <MenuItem value="User">User</MenuItem>
+                      <MenuItem value="Officer">Officer</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+                
+                <IconButton
+                  onClick={() => setShowTicketManager(!showTicketManager)}
+                  sx={{ 
+                    color: showTicketManager ? '#10a37f' : '#9ca3af',
+                    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' }
+                  }}
+                >
+                  <BugReportIcon />
+                </IconButton>
+              </Box>
+            </>
+          )}
+        </Box>
+
+        {/* Main Chat Area */}
+        <Box className="flex-1 flex flex-col relative">
+          {/* Collapsed Sidebar Toggle */}
+          {sidebarCollapsed && (
             <IconButton
-              color="inherit"
-              onClick={() => setShowTicketManager(!showTicketManager)}
-              className="ml-2"
+              onClick={() => setSidebarCollapsed(false)}
+              sx={{
+                position: 'absolute',
+                top: 16,
+                left: 16,
+                zIndex: 1000,
+                backgroundColor: 'white',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                '&:hover': {
+                  backgroundColor: '#f9fafb'
+                }
+              }}
             >
-              <BugReportIcon />
+              <MenuIcon />
             </IconButton>
-          </Toolbar>
-        </AppBar>
+          )}
 
-        {/* Main Content */}
-        <Box className="flex-1 flex overflow-hidden">
-          {/* Left Sidebar - Conversations and File Upload */}
-          <Box className="w-80 border-r border-gray-200 bg-gray-50 flex flex-col ">
-            {/* File Upload Section */}
-            <Box className="p-4 border-b border-gray-200 bg-white">
-              <FileUpload
-                onFileUpload={handleFileUpload}
-                uploadedFiles={uploadedFiles}
-              />
-            </Box>
-            
-            {/* Conversations List */}
-            <Box className="flex-1 overflow-y-auto">
-              <ConversationList
-                conversations={conversations}
-                selectedConversation={selectedConversation}
-                onConversationSelect={handleConversationSelect}
-                onNewConversation={handleNewConversation}
-                onRefresh={loadConversations}
-              />
-            </Box>
-          </Box>
-
-          {/* Main Chat Area */}
-          <Box className="flex-1 flex flex-col">
-            {showTicketManager ? (
-              <TicketManager />
-            ) : (
-              <ChatWindow
-                conversation={selectedConversation}
-                onConversationUpdate={onConversationUpdate}
-                uploadedFiles={uploadedFiles}
-              />
-            )}
-          </Box>
+          {showTicketManager ? (
+            <TicketManager />
+          ) : (
+            <ChatWindow
+              conversation={selectedConversation}
+              onConversationUpdate={onConversationUpdate}
+              uploadedFiles={uploadedFiles}
+              sidebarCollapsed={sidebarCollapsed}
+            />
+          )}
         </Box>
       </Box>
     </ThemeProvider>

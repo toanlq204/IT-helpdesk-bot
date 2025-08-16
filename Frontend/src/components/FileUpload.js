@@ -67,9 +67,17 @@ const FileUpload = ({ onFileUpload, uploadedFiles }) => {
 
   return (
     <Box>
-      <Box className="flex items-center justify-between mb-3">
-        <Typography variant="h6" className="font-semibold">
-          File Upload
+      <Box className="mb-3">
+        <Typography 
+          variant="body2" 
+          sx={{ 
+            color: '#9ca3af',
+            fontWeight: 500,
+            mb: 2,
+            fontSize: '0.875rem'
+          }}
+        >
+          Attachments
         </Typography>
         <input
           accept="*/*"
@@ -84,8 +92,21 @@ const FileUpload = ({ onFileUpload, uploadedFiles }) => {
           <Button
             variant="outlined"
             component="span"
-            startIcon={<UploadIcon />}
+            startIcon={<UploadIcon fontSize="small" />}
             disabled={uploading}
+            size="small"
+            fullWidth
+            sx={{
+              borderColor: '#374151',
+              color: '#9ca3af',
+              textTransform: 'none',
+              fontSize: '0.8rem',
+              py: 1,
+              '&:hover': {
+                borderColor: '#6b7280',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)'
+              }
+            }}
           >
             Upload Files
           </Button>
@@ -94,27 +115,83 @@ const FileUpload = ({ onFileUpload, uploadedFiles }) => {
 
       {uploading && (
         <Box className="mb-3">
-          <Typography variant="body2" color="textSecondary" className="mb-1">
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: '#9ca3af',
+              display: 'block',
+              mb: 1,
+              fontSize: '0.75rem'
+            }}
+          >
             Uploading... {Math.round(uploadProgress)}%
           </Typography>
-          <LinearProgress variant="determinate" value={uploadProgress} />
+          <LinearProgress 
+            variant="determinate" 
+            value={uploadProgress}
+            sx={{
+              backgroundColor: '#374151',
+              '& .MuiLinearProgress-bar': {
+                backgroundColor: '#10a37f'
+              }
+            }}
+          />
         </Box>
       )}
 
       {uploadedFiles.length > 0 && (
         <Box>
-          <Typography variant="subtitle2" className="mb-2">
-            Uploaded Files ({uploadedFiles.length})
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: '#9ca3af',
+              display: 'block',
+              mb: 1,
+              fontSize: '0.75rem'
+            }}
+          >
+            Files ({uploadedFiles.length})
           </Typography>
-          <Box className="flex flex-wrap gap-2">
+          <Box className="space-y-1">
             {uploadedFiles.map((file, index) => (
-              <Chip
+              <Box
                 key={index}
-                icon={<FileIcon />}
-                label={`${file.filename} (${formatFileSize(file.size)})`}
-                variant="outlined"
-                className="max-w-xs"
-              />
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  p: 1.5,
+                  backgroundColor: '#374151',
+                  borderRadius: 1,
+                  border: '1px solid #4b5563'
+                }}
+              >
+                <FileIcon sx={{ color: '#9ca3af', fontSize: 16 }} />
+                <Box className="flex-1 min-w-0">
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'white',
+                      fontSize: '0.75rem',
+                      display: 'block',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {file.filename}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: '#9ca3af',
+                      fontSize: '0.6875rem'
+                    }}
+                  >
+                    {formatFileSize(file.size)}
+                  </Typography>
+                </Box>
+              </Box>
             ))}
           </Box>
         </Box>

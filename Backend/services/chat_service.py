@@ -1,10 +1,15 @@
 from fastapi import Query
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from models.ticket_models import TicketCreate
 import openai
 import os
 import json
+from pinecone import ServerlessSpec, Pinecone
 from services.ticket_service import TicketService
-from pinecone import Pinecone, ServerlessSpec
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain.chains.history_aware_retriever import create_history_aware_retriever
+from langchain.chains import create_retrieval_chain
 
 class ChatService:
     def __init__(
@@ -21,7 +26,6 @@ class ChatService:
             base_url=os.getenv("OPENAI_BASE_URL"),
         )
         os.makedirs(os.path.dirname(chat_data_path), exist_ok=True)
-     
 
     def ticket_to_friendly_message(self, ticket: dict) -> str:
         """Transform a ticket dictionary into a user-friendly message."""
@@ -57,10 +61,14 @@ class ChatService:
     def prepare_messages(self, messages: list, context: str) -> list:
         default_messages = self.get_system_prompt()
         if context and context.strip():
-            default_messages.append({"role": "user", "content": f"Relevant context from knowledge base: {context}"})
+            default_messages.append(
+                {
+                    "role": "user",
+                    "content": f"Relevant context from knowledge base: {context}",
+                }
+            )
         messages = default_messages + messages
         return messages
-    
 
     def get_metadata(self, message: str) -> dict:
         client = openai.OpenAI(
@@ -115,49 +123,53 @@ class ChatService:
         """Build a proper ChromaDB where clause with operators"""
         if not metadata:
             return {}
-        
+
         # ChromaDB supports logical operators like $and, $or and comparison operators like $eq, $in
         # For this use case, we'll use $or to match any of the metadata fields
         conditions = []
-        
+
         # Build individual conditions for each metadata field
         if metadata.get("topic_category") and metadata["topic_category"] != "unknown":
             conditions.append({"topic_category": {"$eq": metadata["topic_category"]}})
-        
-        if metadata.get("difficulty_level") and metadata["difficulty_level"] != "unknown":
-            conditions.append({"difficulty_level": {"$eq": metadata["difficulty_level"]}})
-        
+
+        if (
+            metadata.get("difficulty_level")
+            and metadata["difficulty_level"] != "unknown"
+        ):
+            conditions.append(
+                {"difficulty_level": {"$eq": metadata["difficulty_level"]}}
+            )
+
         # For string fields that might contain the search terms
         if metadata.get("keywords"):
             conditions.append({"keywords": {"$eq": metadata["keywords"]}})
-        
+
         if metadata.get("topics"):
             conditions.append({"topics": {"$eq": metadata["topics"]}})
-        
+
         # If we have conditions, combine them with $or
         if conditions:
             if len(conditions) == 1:
                 return conditions[0]
             else:
                 return {"$or": conditions}
-        
-        return {}        
+
+        return {}
 
         """Query ChromaDB for relevant documents using embeddings to match storage format"""
         try:
             # Generate embedding for the query message using the same model as upload service
             embedding_response = self.openai_client_emb.embeddings.create(
-                input=message,
-                model=os.getenv("AZOPENAI_EMBEDDING_MODEL")
+                input=message, model=os.getenv("AZOPENAI_EMBEDDING_MODEL")
             )
             query_embedding = embedding_response.data[0].embedding
-            
+
             # Use embedding-based query for better semantic search
             results = self.collection.query(
                 query_embeddings=[query_embedding],
                 n_results=3,  # Get top 3 results for better context
                 include=["distances", "documents", "metadatas"],
-                where=self._build_where_clause(metadata) if metadata else None
+                where=self._build_where_clause(metadata) if metadata else None,
             )
             return results
         except Exception as e:
@@ -167,7 +179,7 @@ class ChatService:
                 results = self.collection.query(
                     query_texts=[message],
                     n_results=3,
-                    include=["distances", "documents", "metadatas"]
+                    include=["distances", "documents", "metadatas"],
                     # Don't use where clause in fallback to avoid further errors
                 )
                 return results
@@ -181,35 +193,86 @@ class ChatService:
         try:
             # Generate embedding for the query message using the same model as upload service
             embedding_response = self.openai_client_emb.embeddings.create(
-                input=message,
-                model=os.getenv("AZOPENAI_EMBEDDING_MODEL")
+                input=message, model=os.getenv("AZOPENAI_EMBEDDING_MODEL")
             )
             query_embedding = embedding_response.data[0].embedding
-            
+
             # Use embedding-based query for better semantic search
             results = self.pinecone_client.Index(self.index_name).query(
-                vector=query_embedding,
-                top_k=1,
-                include_metadata=True
+                vector=query_embedding, top_k=1, include_metadata=True
             )
             return results
         except Exception as e:
             print(f"Error in query_pinecone with embeddings: {e}")
             return None
 
+    def query_by_vector(self, message: str) -> str:
+        index = self.pinecone_client.Index(self.index_name)
+        embeddings = OpenAIEmbeddings(
+            api_key=os.getenv("AZOPENAI_EMBEDDING_API_KEY"),
+            base_url=os.getenv("OPENAI_BASE_URL"),
+            model=os.getenv("AZOPENAI_EMBEDDING_MODEL"),
+        )
+        vector_store = PineconeVectorStore(index=index, embedding=embeddings)
+        retriever = vector_store.as_retriever(
+            search_kwargs={
+                "k": 4,
+                # Pinecone metadata filter example:
+                # "filter": {"source": {"$eq": "kb"}},
+                # MMR (diversity) example:
+                # "search_type": "mmr", "lambda_mult": 0.5
+            }
+        )
+        llm = ChatOpenAI(
+            model="gpt-4o-mini",
+            temperature=0,
+            api_key=os.getenv("AZOPENAI_API_KEY"),
+            base_url=os.getenv("OPENAI_BASE_URL"),
+        )
+        rewrite_prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    "You rewrite the user question into a standalone query for retrieval. "
+                    "Use the chat history for context, but do not answer.",
+                ),
+                MessagesPlaceholder("chat_history"),
+                ("user", "{input}"),
+            ]
+        )
+        history_aware_retriever = create_history_aware_retriever(
+            llm=llm, retriever=retriever, prompt=rewrite_prompt
+        )
+        answer_prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    """You are an IT HelpDesk chatbot assistant. 
+                You only provide support for IT-related questions including: computer issues, network problems, software troubleshooting, email problems, printer issues, password resets, VPN connection, hardware malfunctions, system performance, security concerns, and software installation. 
+                If a user asks about topics unrelated to IT support (such as general conversation, personal matters, non-IT business questions, weather, etc.), politely inform them that you only assist with IT-related issues and direct them to contact the appropriate department or resource.
+                 Always provide clear, helpful, and professional responses for IT support topics. Limit your response to 500 tokens.""",
+                ),
+                MessagesPlaceholder("chat_history"),
+                ("user", """Question: {input}
+                            Context:\n{context}"""),
+            ]
+        )
+        combine_chain = create_stuff_documents_chain(llm, answer_prompt)
+        rag_chain = create_retrieval_chain(
+            retriever=history_aware_retriever,  # uses history to rewrite the query
+            combine_docs_chain=combine_chain,    # then answers with retrieved context
+        )
+
+        return rag_chain.invoke({"input": message})
+
     # sk-DRKoljlUoP4FtPCOBVy71Q
     def get_response(self, messages: list, message: str) -> str:
         # Query ChromaDB for relevant context
         vector_results = self.query_pinecone(message, None)
-        if (len(vector_results.matches) == 0):
-            return "I'm sorry, I don't have any information on that topic."
-        
-        # Format the results into a readable context string
-        context = vector_results.matches[0].metadata["chunk_text"]
+        context = ""
+        if len(vector_results.matches) > 0 and vector_results.matches[0].score > 0.44:
+            context = vector_results.matches[0].metadata.get("text")
 
-        if context == "":
-            return "I'm sorry, I don't have any information on that topic."
-        
         client = openai.OpenAI(
             base_url=os.getenv("OPENAI_BASE_URL"), api_key=os.getenv("AZOPENAI_API_KEY")
         )
@@ -284,7 +347,10 @@ class ChatService:
                         return self.ticket_to_friendly_message(ticket)
                     except Exception as e:
                         return None
-        if response.choices[0].message.content is not None:
-            return response.choices[0].message.content
+        elif response.choices[0].message.content is not None:
+            if context != "":
+                return response.choices[0].message.content
+            else:
+                return "Sorry, I don't have any information on that topic."
         else:
             return None

@@ -20,7 +20,7 @@ import {
 } from '@mui/icons-material';
 import { conversationService, ttsService } from '../services/api';
 
-const ChatWindow = ({ conversation, onConversationUpdate, uploadedFiles }) => {
+const ChatWindow = ({ conversation, onConversationUpdate, uploadedFiles, sidebarCollapsed }) => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -179,147 +179,283 @@ const ChatWindow = ({ conversation, onConversationUpdate, uploadedFiles }) => {
   }, []);
 
   return (
-    <Box className="flex-1 flex flex-col h-full">
+    <Box className="flex-1 flex flex-col h-full bg-white">
       {/* Chat Header */}
-      <Box className="p-4 border-b border-gray-200 bg-white">
-        <Typography variant="h6" className="font-semibold">
-          {conversation ? `Chat ${conversation.id.slice(0, 8)}` : 'New Conversation'}
-        </Typography>
-        {uploadedFiles.length > 0 && (
-          <Box className="mt-2 flex flex-wrap gap-1">
-            {uploadedFiles.map((file, index) => (
-              <Chip
-                key={index}
-                icon={<AttachFileIcon />}
-                label={file.filename}
-                size="small"
-                variant="outlined"
-              />
-            ))}
-          </Box>
-        )}
-      </Box>
+      {conversation && (
+        <Box 
+          className="p-4 border-b border-gray-200 bg-white"
+          sx={{ 
+            marginLeft: sidebarCollapsed ? '60px' : '0px',
+            transition: 'margin-left 0.3s ease-in-out'
+          }}
+        >
+          <Typography 
+            variant="h6" 
+            className="font-semibold text-gray-800"
+            sx={{ fontSize: '1.125rem' }}
+          >
+            {conversation.title || `Chat ${conversation.id.slice(0, 8)}`}
+          </Typography>
+          {uploadedFiles.length > 0 && (
+            <Box className="mt-2 flex flex-wrap gap-1">
+              {uploadedFiles.map((file, index) => (
+                <Chip
+                  key={index}
+                  icon={<AttachFileIcon />}
+                  label={file.filename}
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    backgroundColor: '#f3f4f6',
+                    border: '1px solid #e5e7eb'
+                  }}
+                />
+              ))}
+            </Box>
+          )}
+        </Box>
+      )}
 
       {/* Messages Area */}
-      <Box className="flex-1 overflow-y-auto p-4 bg-gray-50">
+      <Box 
+        className={`flex-1 overflow-y-auto ${messages.length === 0 ? 'chat-background-empty' : 'chat-background'}`}
+        sx={{
+          paddingLeft: sidebarCollapsed ? '60px' : '0px',
+          transition: 'padding-left 0.3s ease-in-out'
+        }}
+      >
         {messages.length === 0 ? (
-          <Box className="text-center py-8">
-            <BotIcon className="text-gray-400 mb-2" fontSize="large" />
-            <Typography variant="body1" color="textSecondary">
-              Hello! I'm your IT HelpDesk assistant. How can I help you today?
-            </Typography>
+          <Box className="flex flex-col items-center justify-center h-full text-center px-4">
+            <Box className="mb-8">
+              <Typography 
+                variant="h4" 
+                sx={{ 
+                  fontWeight: 600,
+                  color: '#374151',
+                  mb: 2
+                }}
+              >
+                How can I help you today?
+              </Typography>
+              <Typography variant="body1" sx={{ color: '#6b7280' }}>
+                I'm your IT HelpDesk assistant. Ask me anything about technical issues, software problems, or IT support.
+              </Typography>
+            </Box>
           </Box>
         ) : (
-          <Box className="space-y-4">
+          <Box className="max-w-4xl mx-auto px-4 py-6">
             {messages.map((message, index) => (
               <Box
                 key={index}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className="mb-8"
               >
-                <Box
-                  className={`flex max-w-xs lg:max-w-md ${
-                    message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                <Box 
+                  className={`flex items-start gap-4 ${
+                    message.role === 'user' ? 'justify-end' : ''
                   }`}
                 >
-                  <Avatar
-                    className={`${message.role === 'user' ? 'ml-2' : 'mr-2'}`}
-                    sx={{
-                      bgcolor: message.role === 'user' ? 'primary.main' : 'secondary.main'
-                    }}
-                  >
-                    {message.role === 'user' ? <PersonIcon /> : <BotIcon />}
-                  </Avatar>
-                  <Paper
-                    className={`p-3 ${
-                      message.role === 'user'
-                        ? 'bg-blue-500 text-white'
-                        : message.error
-                        ? 'bg-red-50 border border-red-200'
-                        : 'bg-white'
-                    }`}
-                    elevation={1}
-                  >
-                    <Box className="flex items-start justify-between">
-                      <Typography variant="body1" className="whitespace-pre-wrap flex-1">
-                        {message.content}
-                      </Typography>
-                      
-                      {/* Play button for bot messages */}
-                      {message.role === 'assistant' && !message.error && (
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            if (playingAudio === index) {
-                              handleStopAudio();
-                            } else {
-                              handlePlayAudio(index, message.content);
-                            }
-                          }}
-                          disabled={loadingAudio === index}
-                          className="ml-2 min-w-0"
-                          sx={{ 
-                            padding: '4px',
-                            '&:hover': {
-                              backgroundColor: 'rgba(0, 0, 0, 0.04)'
-                            }
+                  {message.role === 'user' ? (
+                    // User message layout (right-aligned)
+                    <>
+                      <Box className="flex-1 min-w-0 max-w-2xl">
+                        <Box 
+                          sx={{
+                            backgroundColor: '#f7f7f8',
+                            borderRadius: '18px',
+                            padding: '12px 16px',
+                            marginLeft: 'auto',
+                            maxWidth: 'fit-content'
                           }}
                         >
-                          {loadingAudio === index ? (
-                            <CircularProgress size={16} />
-                          ) : playingAudio === index ? (
-                            <StopIcon fontSize="small" />
-                          ) : (
-                            <PlayIcon fontSize="small" />
-                          )}
-                        </IconButton>
-                      )}
-                    </Box>
-                    
-                    {message.files && message.files.length > 0 && (
-                      <Box className="mt-2">
-                        {message.files.map((filename, i) => (
-                          <Chip
-                            key={i}
-                            label={filename}
-                            size="small"
-                            className="mr-1 mb-1"
-                          />
-                        ))}
-                      </Box>
-                    )}
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              color: '#374151',
+                              fontSize: '1rem',
+                              lineHeight: 1.6,
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word'
+                            }}
+                          >
+                            {message.content}
+                          </Typography>
 
-                    {message.functionCalls && message.functionCalls.length > 0 && (
-                      <Box className="mt-2">
-                        <Typography variant="caption" className="text-gray-600">
-                          Function calls executed: {message.functionCalls.join(', ')}
+                          {message.files && message.files.length > 0 && (
+                            <Box className="mt-3 flex flex-wrap gap-2">
+                              {message.files.map((filename, i) => (
+                                <Chip
+                                  key={i}
+                                  label={filename}
+                                  size="small"
+                                  sx={{
+                                    backgroundColor: '#e5e7eb',
+                                    border: '1px solid #d1d5db',
+                                    fontSize: '0.75rem'
+                                  }}
+                                />
+                              ))}
+                            </Box>
+                          )}
+
+                          <Typography
+                            variant="caption"
+                            sx={{ 
+                              display: 'block',
+                              mt: 1,
+                              color: '#9ca3af',
+                              fontSize: '0.75rem',
+                              textAlign: 'right'
+                            }}
+                          >
+                            {formatTime(message.timestamp)}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Avatar
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          backgroundColor: '#10a37f',
+                          fontSize: '1rem'
+                        }}
+                      >
+                        <PersonIcon fontSize="small" />
+                      </Avatar>
+                    </>
+                  ) : (
+                    // Assistant message layout (left-aligned)
+                    <>
+                      <Avatar
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          backgroundColor: '#6b7280',
+                          fontSize: '1rem'
+                        }}
+                      >
+                        <BotIcon fontSize="small" />
+                      </Avatar>
+                      
+                      <Box className="flex-1 min-w-0">
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            color: '#374151',
+                            fontSize: '1rem',
+                            lineHeight: 1.6,
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word'
+                          }}
+                        >
+                          {message.content}
+                        </Typography>
+
+                        {/* Play button for bot messages */}
+                        {!message.error && (
+                          <Box className="mt-2">
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                if (playingAudio === index) {
+                                  handleStopAudio();
+                                } else {
+                                  handlePlayAudio(index, message.content);
+                                }
+                              }}
+                              disabled={loadingAudio === index}
+                              sx={{ 
+                                padding: '6px',
+                                color: '#6b7280',
+                                '&:hover': {
+                                  backgroundColor: '#f3f4f6',
+                                  color: '#374151'
+                                }
+                              }}
+                            >
+                              {loadingAudio === index ? (
+                                <CircularProgress size={16} />
+                              ) : playingAudio === index ? (
+                                <StopIcon fontSize="small" />
+                              ) : (
+                                <PlayIcon fontSize="small" />
+                              )}
+                            </IconButton>
+                          </Box>
+                        )}
+                        
+                        {message.files && message.files.length > 0 && (
+                          <Box className="mt-3 flex flex-wrap gap-2">
+                            {message.files.map((filename, i) => (
+                              <Chip
+                                key={i}
+                                label={filename}
+                                size="small"
+                                sx={{
+                                  backgroundColor: '#f3f4f6',
+                                  border: '1px solid #e5e7eb',
+                                  fontSize: '0.75rem'
+                                }}
+                              />
+                            ))}
+                          </Box>
+                        )}
+
+                        {message.functionCalls && message.functionCalls.length > 0 && (
+                          <Box className="mt-2">
+                            <Typography 
+                              variant="caption" 
+                              sx={{ 
+                                color: '#6b7280',
+                                fontStyle: 'italic'
+                              }}
+                            >
+                              Function calls executed: {message.functionCalls.join(', ')}
+                            </Typography>
+                          </Box>
+                        )}
+
+                        <Typography
+                          variant="caption"
+                          sx={{ 
+                            display: 'block',
+                            mt: 1,
+                            color: '#9ca3af',
+                            fontSize: '0.75rem'
+                          }}
+                        >
+                          {formatTime(message.timestamp)}
                         </Typography>
                       </Box>
-                    )}
-
-                    <Typography
-                      variant="caption"
-                      className={`block mt-1 ${
-                        message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
-                      }`}
-                    >
-                      {formatTime(message.timestamp)}
-                    </Typography>
-                  </Paper>
+                    </>
+                  )}
                 </Box>
               </Box>
             ))}
+            
             {isLoading && (
-              <Box className="flex justify-start">
-                <Box className="flex flex-row">
-                  <Avatar className="mr-2" sx={{ bgcolor: 'secondary.main' }}>
-                    <BotIcon />
+              <Box className="mb-8">
+                <Box className="flex items-start gap-4">
+                  <Avatar
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      backgroundColor: '#6b7280'
+                    }}
+                  >
+                    <BotIcon fontSize="small" />
                   </Avatar>
-                  <Paper className="p-3 bg-white" elevation={1}>
-                    <CircularProgress size={20} />
-                    <Typography variant="body2" className="ml-2 inline">
+                  <Box className="flex items-center gap-2">
+                    <CircularProgress 
+                      size={16} 
+                      sx={{ color: '#6b7280' }}
+                    />
+                    <Typography 
+                      variant="body2" 
+                      sx={{ color: '#6b7280' }}
+                    >
                       Thinking...
                     </Typography>
-                  </Paper>
+                  </Box>
                 </Box>
               </Box>
             )}
@@ -329,27 +465,93 @@ const ChatWindow = ({ conversation, onConversationUpdate, uploadedFiles }) => {
       </Box>
 
       {/* Input Area */}
-      <Box className="p-4 border-t border-gray-200 bg-white">
-        <Box className="flex items-end space-x-2">
-          <TextField
-            fullWidth
-            multiline
-            maxRows={4}
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Type your message..."
-            variant="outlined"
-            disabled={isLoading}
-          />
-          <IconButton
-            color="primary"
-            onClick={handleSendMessage}
-            disabled={!inputMessage.trim() || isLoading}
-            className="mb-1"
+      <Box 
+        className="p-4 bg-white border-t border-gray-200"
+        sx={{
+          paddingLeft: sidebarCollapsed ? '76px' : '16px',
+          transition: 'padding-left 0.3s ease-in-out'
+        }}
+      >
+        <Box className="max-w-4xl mx-auto">
+          <Box 
+            className="relative"
+            sx={{
+              border: '1px solid #e5e7eb',
+              borderRadius: '12px',
+              backgroundColor: '#ffffff',
+              '&:focus-within': {
+                borderColor: '#10a37f',
+                boxShadow: '0 0 0 3px rgba(16, 163, 127, 0.1)'
+              }
+            }}
           >
-            <SendIcon />
-          </IconButton>
+            <TextField
+              fullWidth
+              multiline
+              maxRows={6}
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Message IT HelpDesk..."
+              variant="outlined"
+              disabled={isLoading}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  border: 'none',
+                  '& fieldset': { border: 'none' },
+                  '&:hover fieldset': { border: 'none' },
+                  '&.Mui-focused fieldset': { border: 'none' },
+                  paddingRight: '60px',
+                  paddingTop: '12px',
+                  paddingBottom: '12px',
+                  fontSize: '1rem',
+                  lineHeight: 1.5
+                },
+                '& .MuiInputBase-input': {
+                  color: '#374151',
+                  '&::placeholder': {
+                    color: '#9ca3af',
+                    opacity: 1
+                  }
+                }
+              }}
+            />
+            <IconButton
+              onClick={handleSendMessage}
+              disabled={!inputMessage.trim() || isLoading}
+              sx={{
+                position: 'absolute',
+                right: '8px',
+                bottom: '8px',
+                backgroundColor: inputMessage.trim() && !isLoading ? '#10a37f' : '#f3f4f6',
+                color: inputMessage.trim() && !isLoading ? 'white' : '#9ca3af',
+                width: 32,
+                height: 32,
+                '&:hover': {
+                  backgroundColor: inputMessage.trim() && !isLoading ? '#0d8f69' : '#e5e7eb'
+                },
+                '&:disabled': {
+                  backgroundColor: '#f3f4f6',
+                  color: '#9ca3af'
+                }
+              }}
+            >
+              <SendIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Box>
+          
+          <Typography
+            variant="caption"
+            sx={{
+              display: 'block',
+              textAlign: 'center',
+              mt: 2,
+              color: '#9ca3af',
+              fontSize: '0.75rem'
+            }}
+          >
+            IT HelpDesk can make mistakes. Consider checking important information.
+          </Typography>
         </Box>
       </Box>
     </Box>
