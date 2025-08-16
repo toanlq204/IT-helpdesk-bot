@@ -3,9 +3,8 @@ from models.ticket_models import TicketCreate
 import openai
 import os
 import json
-import chromadb
 from services.ticket_service import TicketService
-
+from pinecone import Pinecone, ServerlessSpec
 
 class ChatService:
     def __init__(
@@ -15,59 +14,14 @@ class ChatService:
     ):
         self.chat_data_path = chat_data_path
         self.ticket_service = ticket_service
-        self.chroma_client = chromadb.PersistentClient(path="storage/chroma_db")
-        self.collection = self.chroma_client.get_or_create_collection("files")
+        self.pinecone_client = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+        self.index_name = "helpdesk-kb"
         self.openai_client_emb = openai.OpenAI(
             api_key=os.getenv("AZOPENAI_EMBEDDING_API_KEY"),
             base_url=os.getenv("OPENAI_BASE_URL"),
         )
         os.makedirs(os.path.dirname(chat_data_path), exist_ok=True)
-        
-        # Check collection health on initialization
-        self._check_collection_health()
-
-    def _check_collection_health(self):
-        """Check if the collection exists and has compatible embeddings"""
-        try:
-            # Try to get collection info to see if it has data
-            collection_count = self.collection.count()
-            print(f"ChromaDB collection 'files' has {collection_count} documents")
-            
-            if collection_count > 0:
-                # Test a simple query to see if embeddings are compatible
-                test_embedding = self.openai_client_emb.embeddings.create(
-                    input="test query",
-                    model=os.getenv("AZOPENAI_EMBEDDING_MODEL")
-                ).data[0].embedding
-                
-                # Try a test query to verify embedding compatibility
-                try:
-                    self.collection.query(
-                        query_embeddings=[test_embedding],
-                        n_results=1,
-                        include=["distances"]
-                    )
-                    print("ChromaDB collection embeddings are compatible")
-                except Exception as embedding_error:
-                    print(f"ChromaDB embedding compatibility issue: {embedding_error}")
-                    print("Consider clearing the collection or checking embedding model consistency")
-                    
-        except Exception as e:
-            print(f"ChromaDB collection health check failed: {e}")
-
-    def reset_collection_if_needed(self):
-        """Reset the ChromaDB collection to fix embedding dimension mismatches"""
-        try:
-            print("Resetting ChromaDB collection due to embedding incompatibility...")
-            # Delete the existing collection
-            self.chroma_client.delete_collection("files")
-            # Recreate the collection
-            self.collection = self.chroma_client.get_or_create_collection("files")
-            print("ChromaDB collection reset successfully")
-            return True
-        except Exception as e:
-            print(f"Failed to reset ChromaDB collection: {e}")
-            return False
+     
 
     def ticket_to_friendly_message(self, ticket: dict) -> str:
         """Transform a ticket dictionary into a user-friendly message."""
@@ -89,7 +43,10 @@ class ChatService:
         return [
             {
                 "role": "system",
-                "content": "You are an IT HelpDesk chatbot assistant. You only provide support for IT-related questions including: computer issues, network problems, software troubleshooting, email problems, printer issues, password resets, VPN connection, hardware malfunctions, system performance, security concerns, and software installation. If a user asks about topics unrelated to IT support (such as general conversation, personal matters, non-IT business questions, weather, etc.), politely inform them that you only assist with IT-related issues and direct them to contact the appropriate department or resource. Always provide clear, helpful, and professional responses for IT support topics. Limit your response to 500 tokens.",
+                "content": """You are an IT HelpDesk chatbot assistant. 
+                You only provide support for IT-related questions including: computer issues, network problems, software troubleshooting, email problems, printer issues, password resets, VPN connection, hardware malfunctions, system performance, security concerns, and software installation. 
+                If a user asks about topics unrelated to IT support (such as general conversation, personal matters, non-IT business questions, weather, etc.), politely inform them that you only assist with IT-related issues and direct them to contact the appropriate department or resource.
+                 Always provide clear, helpful, and professional responses for IT support topics. Limit your response to 500 tokens.""",
             }
         ]
 
@@ -104,16 +61,6 @@ class ChatService:
         messages = default_messages + messages
         return messages
     
-    def format_chroma_results(self, results) -> str:
-        """Format ChromaDB results into a readable context string"""
-        if not results or not results.get('documents') or not results['documents'][0]:
-            return ""
-        
-        context_parts = []
-        documents = results['documents'][0]  # First query result
-        for document in documents:  
-            context_parts.append(document)
-        return "\n\n".join(context_parts) if context_parts else ""
 
     def get_metadata(self, message: str) -> dict:
         client = openai.OpenAI(
@@ -165,7 +112,6 @@ class ChatService:
             print(e)
             return None
 
-    def _build_where_clause(self, metadata: dict) -> dict:
         """Build a proper ChromaDB where clause with operators"""
         if not metadata:
             return {}
@@ -197,7 +143,6 @@ class ChatService:
         
         return {}        
 
-    def query_chroma(self, message: str, metadata: dict) -> str:
         """Query ChromaDB for relevant documents using embeddings to match storage format"""
         try:
             # Generate embedding for the query message using the same model as upload service
@@ -231,12 +176,39 @@ class ChatService:
                 # Return empty structure if all queries fail
                 return {"documents": [[]], "distances": [[]], "metadatas": [[]]}
 
+    def query_pinecone(self, message: str, metadata: dict) -> str:
+        """Query Pinecone for relevant documents using embeddings to match storage format"""
+        try:
+            # Generate embedding for the query message using the same model as upload service
+            embedding_response = self.openai_client_emb.embeddings.create(
+                input=message,
+                model=os.getenv("AZOPENAI_EMBEDDING_MODEL")
+            )
+            query_embedding = embedding_response.data[0].embedding
+            
+            # Use embedding-based query for better semantic search
+            results = self.pinecone_client.Index(self.index_name).query(
+                vector=query_embedding,
+                top_k=1,
+                include_metadata=True
+            )
+            return results
+        except Exception as e:
+            print(f"Error in query_pinecone with embeddings: {e}")
+            return None
+
     # sk-DRKoljlUoP4FtPCOBVy71Q
     def get_response(self, messages: list, message: str) -> str:
         # Query ChromaDB for relevant context
-        chroma_results = self.query_chroma(message, self.get_metadata(message))
+        vector_results = self.query_pinecone(message, None)
+        if (len(vector_results.matches) == 0):
+            return "I'm sorry, I don't have any information on that topic."
+        
         # Format the results into a readable context string
-        context = self.format_chroma_results(chroma_results)
+        context = vector_results.matches[0].metadata["chunk_text"]
+
+        if context == "":
+            return "I'm sorry, I don't have any information on that topic."
         
         client = openai.OpenAI(
             base_url=os.getenv("OPENAI_BASE_URL"), api_key=os.getenv("AZOPENAI_API_KEY")

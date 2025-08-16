@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
-from routers import ticket_router, conversation_router, chat_router, upload_router
+from routers import ticket_router, conversation_router, chat_router, upload_router, tts_router
 # Load environment variables
 load_dotenv()
 
@@ -28,6 +28,7 @@ app.include_router(ticket_router, tags=["Tickets"])
 app.include_router(conversation_router, tags=["Conversations"])
 app.include_router(chat_router, tags=["Chat"])
 app.include_router(upload_router, tags=["File Upload"])
+app.include_router(tts_router, tags=["Text-to-Speech"])
 
 @app.get("/")
 async def root():

@@ -13,15 +13,21 @@ import {
   Send as SendIcon,
   Person as PersonIcon,
   SmartToy as BotIcon,
-  AttachFile as AttachFileIcon
+  AttachFile as AttachFileIcon,
+  PlayArrow as PlayIcon,
+  Stop as StopIcon,
+  VolumeOff as VolumeOffIcon
 } from '@mui/icons-material';
-import { conversationService } from '../services/api';
+import { conversationService, ttsService } from '../services/api';
 
 const ChatWindow = ({ conversation, onConversationUpdate, uploadedFiles }) => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [playingAudio, setPlayingAudio] = useState(null); // Track which message is playing
+  const [loadingAudio, setLoadingAudio] = useState(null); // Track which message is loading audio
   const messagesEndRef = useRef(null);
+  const audioRef = useRef(null);
 
   useEffect(() => {
     if (conversation) {
@@ -106,6 +112,72 @@ const ChatWindow = ({ conversation, onConversationUpdate, uploadedFiles }) => {
     });
   };
 
+  const handlePlayAudio = async (messageIndex, text) => {
+    try {
+      // Stop any currently playing audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      
+      // If this message is already playing, stop it
+      if (playingAudio === messageIndex) {
+        setPlayingAudio(null);
+        return;
+      }
+
+      setLoadingAudio(messageIndex);
+      
+      // Convert text to speech
+      const audioUrl = await ttsService.convertToSpeech(text);
+      
+      // Create and configure audio element
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      
+      audio.onloadeddata = () => {
+        setLoadingAudio(null);
+        setPlayingAudio(messageIndex);
+        audio.play();
+      };
+      
+      audio.onended = () => {
+        setPlayingAudio(null);
+        URL.revokeObjectURL(audioUrl); // Clean up blob URL
+      };
+      
+      audio.onerror = (error) => {
+        console.error('Audio playback error:', error);
+        setLoadingAudio(null);
+        setPlayingAudio(null);
+        URL.revokeObjectURL(audioUrl);
+      };
+      
+    } catch (error) {
+      console.error('Failed to convert text to speech:', error);
+      setLoadingAudio(null);
+      setPlayingAudio(null);
+    }
+  };
+
+  const handleStopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setPlayingAudio(null);
+  };
+
+  // Cleanup audio when component unmounts
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
   return (
     <Box className="flex-1 flex flex-col h-full">
       {/* Chat Header */}
@@ -167,9 +239,41 @@ const ChatWindow = ({ conversation, onConversationUpdate, uploadedFiles }) => {
                     }`}
                     elevation={1}
                   >
-                    <Typography variant="body1" className="whitespace-pre-wrap">
-                      {message.content}
-                    </Typography>
+                    <Box className="flex items-start justify-between">
+                      <Typography variant="body1" className="whitespace-pre-wrap flex-1">
+                        {message.content}
+                      </Typography>
+                      
+                      {/* Play button for bot messages */}
+                      {message.role === 'assistant' && !message.error && (
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            if (playingAudio === index) {
+                              handleStopAudio();
+                            } else {
+                              handlePlayAudio(index, message.content);
+                            }
+                          }}
+                          disabled={loadingAudio === index}
+                          className="ml-2 min-w-0"
+                          sx={{ 
+                            padding: '4px',
+                            '&:hover': {
+                              backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                            }
+                          }}
+                        >
+                          {loadingAudio === index ? (
+                            <CircularProgress size={16} />
+                          ) : playingAudio === index ? (
+                            <StopIcon fontSize="small" />
+                          ) : (
+                            <PlayIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                      )}
+                    </Box>
                     
                     {message.files && message.files.length > 0 && (
                       <Box className="mt-2">
