@@ -19,16 +19,16 @@ app.add_middleware(
 )
 
 # Create necessary directories
-os.makedirs("tickets", exist_ok=True)
-os.makedirs("threads", exist_ok=True)
-os.makedirs("data", exist_ok=True)
-os.makedirs("storage/logs", exist_ok=True)  # For FAQ audit logs
+os.makedirs("storage/tickets", exist_ok=True)
+os.makedirs("storage/threads", exist_ok=True)
+os.makedirs("storage/data", exist_ok=True)
+os.makedirs("storage/chroma_db", exist_ok=True)  # For file upload service
+
 app.include_router(ticket_router, tags=["Tickets"])
 app.include_router(conversation_router, tags=["Conversations"])
 app.include_router(chat_router, tags=["Chat"])
 app.include_router(upload_router, tags=["File Upload"])
 app.include_router(tts_router, tags=["Text-to-Speech"])
-
 
 @app.get("/")
 async def root():
@@ -40,7 +40,6 @@ async def root():
         "health": "OK"
     }
 
-
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
@@ -48,4 +47,4 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000) 
