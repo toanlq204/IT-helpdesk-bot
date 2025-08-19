@@ -24,7 +24,15 @@ except ImportError:
     PLAYSOUND_AVAILABLE = False
 
 
-def load_speech_model(model_name="facebook/mms-tts-vie"):
+def load_vn_speech_model():
+    return load_speech_model("facebook/mms-tts-vie")
+
+
+def load_en_speech_model():
+    return load_speech_model("facebook/mms-tts-eng")
+
+
+def load_speech_model(model_name="facebook/mms-tts-eng"):
     try:
         model = VitsModel.from_pretrained(model_name)
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -141,6 +149,17 @@ def _play_with_playsound(waveform, sample_rate):
 def text_to_speech(text):
     # Load model
     model, tokenizer = load_speech_model()
+    if model is None or tokenizer is None:
+        return
+
+    waveform, sample_rate = generate_speech(model, tokenizer, text)
+    if waveform is None:
+        return
+
+    play_audio(waveform, sample_rate, "pygame")
+
+
+def text_to_speech(text, model, tokenizer):
     if model is None or tokenizer is None:
         return
 

@@ -6,14 +6,11 @@ import {
   ListItemButton,
   ListItemText,
   Typography,
-  Button,
-  IconButton,
-  Divider
+  IconButton
 } from '@mui/material';
 import {
-  Add as AddIcon,
-  Refresh as RefreshIcon,
-  Chat as ChatIcon
+  Chat as ChatIcon,
+  MoreHoriz as MoreIcon
 } from '@mui/icons-material';
 
 const ConversationList = ({
@@ -33,78 +30,88 @@ const ConversationList = ({
 
   return (
     <Box className="h-full flex flex-col">
-      {/* Header */}
-      <Box className="p-4 border-b border-gray-200">
-        <Box className="flex items-center justify-between mb-3">
-          <Typography variant="h6" className="font-semibold">
-            Conversations
-          </Typography>
-          <IconButton size="small" onClick={onRefresh}>
-            <RefreshIcon />
-          </IconButton>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={onNewConversation}
-          fullWidth
-          className="mb-2"
-        >
-          New Chat
-        </Button>
-      </Box>
-
       {/* Conversation List */}
       <Box className="flex-1 overflow-y-auto">
-        <List className="p-0">
+        <List sx={{ padding: 0 }}>
           {conversations.length === 0 ? (
             <Box className="p-4 text-center">
-              <ChatIcon className="text-gray-400 mb-2" fontSize="large" />
-              <Typography variant="body2" color="textSecondary">
+              <ChatIcon sx={{ color: '#6b7280', fontSize: 40, mb: 1 }} />
+              <Typography variant="body2" sx={{ color: '#9ca3af' }}>
                 No conversations yet
               </Typography>
             </Box>
           ) : (
             conversations.map((conversation) => (
-              <React.Fragment key={conversation.id}>
-                <ListItem disablePadding>
-                  <ListItemButton
-                    selected={selectedConversation?.id === conversation.id}
-                    onClick={() => onConversationSelect(conversation)}
-                    className="px-4 py-3"
-                  >
-                    <ListItemText
-                      primary={
-                        <Typography
-                          variant="subtitle2"
-                          className="font-medium truncate"
-                        >
-                          {conversation.title || `Chat ${conversation.id.slice(0, 8)}`}
-                        </Typography>
+              <ListItem 
+                key={conversation.id} 
+                disablePadding
+                sx={{ mb: 0.5 }}
+              >
+                <ListItemButton
+                  selected={selectedConversation?.id === conversation.id}
+                  onClick={() => onConversationSelect(conversation)}
+                  sx={{
+                    mx: 2,
+                    borderRadius: 2,
+                    py: 2,
+                    px: 3,
+                    '&.Mui-selected': {
+                      backgroundColor: '#374151',
+                      '&:hover': {
+                        backgroundColor: '#374151',
                       }
-                      secondary={
-                        <Box>
-                          <Typography
-                            variant="body2"
-                            color="textSecondary"
-                            className="truncate"
-                          >
-                            {conversation.lastMessage || 'No messages yet'}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            color="textSecondary"
-                            className="mt-1"
-                          >
-                            {formatDate(conversation.updatedAt)}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                  </ListItemButton>
-                </ListItem>
-                <Divider />
-              </React.Fragment>
+                    },
+                    '&:hover': {
+                      backgroundColor: '#374151',
+                    }
+                  }}
+                >
+                  <Box className="flex items-center w-full">
+                    <ChatIcon sx={{ color: '#9ca3af', fontSize: 16, mr: 2 }} />
+                    <Box className="flex-1 min-w-0">
+                      <Typography
+                        variant="body2"
+                        sx={{ 
+                          color: 'white',
+                          fontWeight: 500,
+                          fontSize: '0.875rem',
+                          lineHeight: 1.2,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {conversation.title || conversation.lastMessage || `Chat ${conversation.id.slice(0, 8)}`}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{ 
+                          color: '#9ca3af',
+                          fontSize: '0.75rem',
+                          lineHeight: 1,
+                          mt: 0.5,
+                          display: 'block'
+                        }}
+                      >
+                        {formatDate(conversation.updatedAt)}
+                      </Typography>
+                    </Box>
+                    <IconButton
+                      size="small"
+                      sx={{ 
+                        color: '#6b7280',
+                        opacity: 0,
+                        transition: 'opacity 0.2s',
+                        '.MuiListItemButton-root:hover &': {
+                          opacity: 1
+                        }
+                      }}
+                    >
+                      <MoreIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                </ListItemButton>
+              </ListItem>
             ))
           )}
         </List>

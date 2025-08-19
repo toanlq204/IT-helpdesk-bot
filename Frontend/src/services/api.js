@@ -40,7 +40,7 @@ export const conversationService = {
     const response = await api.post('/chat', {
       message,
       conversation_id: conversationId,
-      file_ids: fileIds,
+      file_ids: [],
     });
     return response.data;
   },
@@ -71,5 +71,39 @@ export const ticketService = {
   getTicket: async (ticketId) => {
     const response = await api.get(`/tickets/${ticketId}`);
     return response.data;
+  },
+};
+
+// Text-to-Speech service
+export const ttsService = {
+  convertToSpeech: async (text, sampleRate = 16000) => {
+    try {
+      const response = await api.post('/tts/convert', {
+        text,
+        sample_rate: sampleRate
+      }, {
+        responseType: 'blob', // Important for audio data
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      // Create audio blob URL for playback
+      const audioBlob = new Blob([response.data], { type: 'audio/wav' });
+      return URL.createObjectURL(audioBlob);
+    } catch (error) {
+      console.error('TTS conversion failed:', error);
+      throw error;
+    }
+  },
+
+  healthCheck: async () => {
+    try {
+      const response = await api.get('/tts/health');
+      return response.data;
+    } catch (error) {
+      console.error('TTS health check failed:', error);
+      throw error;
+    }
   },
 }; 

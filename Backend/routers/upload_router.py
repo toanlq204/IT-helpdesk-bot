@@ -203,12 +203,6 @@ async def upload_file(
                     "file_size": len(file_content),
                     "text_length": len(text_content),
                     "word_count": len(text_content.split())
-                },
-                "metadata": result.get("metadata", {}),
-                "processing_info": {
-                    "ai_metadata_used": use_ai_metadata,
-                    "chunk_size": chunk_size if use_ai_metadata else None,
-                    "chunks_analyzed": result.get("metadata", {}).get("chunks_analyzed", 0) if use_ai_metadata else 0
                 }
             }
         )

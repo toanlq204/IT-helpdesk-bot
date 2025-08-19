@@ -78,5 +78,35 @@
     "assignee": "",
     "created_at": "2025-08-02T17:49:42.801493",
     "updated_at": "2025-08-02T17:49:42.801500"
+  },
+  {
+    "id": "8f63b093-3c0d-40c1-91e9-5c5739bc05f2",
+    "title": "Email Password Reset Request",
+    "description": "User needs assistance with resetting their email password.",
+    "priority": "medium",
+    "status": "open",
+    "assignee": "",
+    "created_at": "2025-08-16T17:00:40.283848",
+    "updated_at": "2025-08-16T17:00:40.283872"
+  },
+  {
+    "id": "89ed17d7-c5e4-48e5-91df-14373145a9d8",
+    "title": "Reset Email Password",
+    "description": "User needs assistance with resetting their email password.",
+    "priority": "medium",
+    "status": "open",
+    "assignee": "",
+    "created_at": "2025-08-16T17:09:55.582969",
+    "updated_at": "2025-08-16T17:09:55.582986"
+  },
+  {
+    "id": "8718403b-ec54-4c41-bc25-598111d55fba",
+    "title": "Account Unlock Request",
+    "description": "User needs assistance to unlock their account.",
+    "priority": "medium",
+    "status": "open",
+    "assignee": "",
+    "created_at": "2025-08-16T17:17:56.572287",
+    "updated_at": "2025-08-16T17:17:56.572310"
   }
 ]
