@@ -1,8 +1,91 @@
-Frontend/node_modules
-Backend/**/*/__pycache__
-Backend/__pycache__
-Backend/storage/threads
-Backend/.venv
-Backend/chroma_db
-Backend/storage
+# ================= Root / Common =================
+# Environment files (giữ lại các template)
 .env
+.env.*
+!.env.template
+Backend/.env
+Backend/.env.*
+!Backend/.env.template
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Logs / debug
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ================= Frontend (React) =================
+Frontend/node_modules/
+Frontend/build/
+Frontend/dist/
+Frontend/.parcel-cache/
+Frontend/.cache/
+Frontend/coverage/
+
+# Production build artifacts sometimes at root
+build/
+dist/
+
+# ================= Backend (Python) =================
+# Byte-compiled / optimized / DLL files
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+Backend/venv/
+Backend/.venv/
+.envrc
+
+# Python tooling caches
+.pytest_cache/
+.mypy_cache/
+.pyre/
+.pytype/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Packaging
+*.egg-info/
+.eggs/
+*.egg
+MANIFEST
+
+# ================= AI / Data Storage =================
+# Vector DB / embedded data
+Backend/chroma_db/
+Backend/storage/chroma_db/
+
+# Runtime storage (tickets, threads, messages, uploads) – ignore all, keep placeholder
+Backend/storage/**
+!Backend/storage/.gitkeep
+# If you later want to version sample data, move it to a separate folder and whitelist.
+
+# ================= Misc =================
+# Cache / temp
+*.tmp
+*.temp
+*.bak
+*.orig
+*.retry
+
+# Coverage / reports (frontend)
+Frontend/coverage/
+
+# Lock backups
+package-lock.json.*
+
+# ================= Keep placeholders =================
+# Create placeholder if needed
+# (Run: touch Backend/storage/.gitkeep)
