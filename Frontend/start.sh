@@ -63,6 +63,18 @@ sleep 3
 # Start frontend server
 echo "⚛️  Starting React frontend server..."
 cd ../Frontend
+
+# Check if frontend dependencies are installed
+if [ ! -d "node_modules" ]; then
+    echo "📦 Installing frontend dependencies..."
+    npm install
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to install frontend dependencies"
+        kill $BACKEND_PID 2>/dev/null || true
+        exit 1
+    fi
+fi
+
 npm start &
 FRONTEND_PID=$!
 

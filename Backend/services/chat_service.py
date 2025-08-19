@@ -11,6 +11,7 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain.chains import create_retrieval_chain
 
+
 class ChatService:
     def __init__(
         self,
@@ -130,7 +131,8 @@ class ChatService:
 
         # Build individual conditions for each metadata field
         if metadata.get("topic_category") and metadata["topic_category"] != "unknown":
-            conditions.append({"topic_category": {"$eq": metadata["topic_category"]}})
+            conditions.append(
+                {"topic_category": {"$eq": metadata["topic_category"]}})
 
         if (
             metadata.get("difficulty_level")
@@ -312,6 +314,7 @@ class ChatService:
                 },
             ],
         )
+
         tool_calls = response.choices[0].message.tool_calls
         if tool_calls is not None:
             for tool_call in tool_calls:
@@ -354,3 +357,50 @@ class ChatService:
                 return "Sorry, I don't have any information on that topic."
         else:
             return None
+
+    def get_enhanced_response(self, user_message: str, conversation_id: str = None) -> dict:
+        """Get enhanced response using ChromaDB knowledge base + OpenAI with confidence logic and conversation history"""
+        try:
+            # Use the query pipeline for semantic search and AI response with conversation context
+            result = query_pipeline.answer_query(
+                user_message, conversation_id=conversation_id)
+
+            # Add confidence-based metadata
+            confidence_level = result.get("confidence_level", "unknown")
+            needs_review = result.get("needs_human_review", False)
+
+            response = {
+                "response": result["answer"],
+                "sources": result.get("sources", []),
+                "retrieved_count": result.get("retrieved_count", 0),
+                "confidence_level": confidence_level,
+                "needs_human_review": needs_review,
+                "top_distance": result.get("top_distance", 1.0),
+                "conversation_id": result.get("conversation_id"),
+                "conversation_turns": result.get("conversation_turns", 0),
+                "log_id": result.get("log_id"),  # For feedback tracking
+                "type": "enhanced"
+            }
+
+            # Add confidence-based recommendations
+            if confidence_level == "low" or needs_review:
+                response["recommendation"] = "This query may need human review. Consider creating a support ticket."
+            elif confidence_level == "medium":
+                response["recommendation"] = "Answer provided with some uncertainty. Verify if this resolves your issue."
+
+            return response
+
+        except Exception as e:
+            # Fallback to regular response if enhanced fails
+            fallback_response = self.get_response(
+                [{"role": "user", "content": user_message}])
+            return {
+                "response": fallback_response or "I'm having trouble processing your request.",
+                "sources": [],
+                "retrieved_count": 0,
+                "confidence_level": "fallback",
+                "needs_human_review": True,
+                "type": "fallback",
+                "error": str(e),
+                "recommendation": "System encountered an error. Please create a support ticket."
+            }
