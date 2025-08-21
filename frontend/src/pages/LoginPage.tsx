@@ -4,6 +4,7 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Alert, AlertDescription } from '../components/ui/alert'
+import { HelpCircle } from 'lucide-react'
 
 const demoAccounts = [
   { email: 'admin@ex.com', password: 'Admin123!', role: 'Admin' },
@@ -33,13 +34,16 @@ export const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+            <HelpCircle className="w-8 h-8 text-primary" />
+          </div>
+          <h2 className="text-3xl font-bold text-foreground">
             IT Helpdesk
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-sm text-muted-foreground">
             Sign in to your account
           </p>
         </div>
@@ -60,7 +64,7 @@ export const LoginPage = () => {
               )}
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="email" className="block text-sm font-medium text-foreground">
                   Email
                 </label>
                 <Input
@@ -75,7 +79,7 @@ export const LoginPage = () => {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="password" className="block text-sm font-medium text-foreground">
                   Password
                 </label>
                 <Input
@@ -104,7 +108,7 @@ export const LoginPage = () => {
                   <div className="w-full border-t border-gray-300" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Demo Accounts</span>
+                  <span className="px-2 bg-card text-muted-foreground">Demo Accounts</span>
                 </div>
               </div>
 
@@ -118,7 +122,7 @@ export const LoginPage = () => {
                   >
                     <div className="flex items-center justify-between w-full">
                       <span>{account.role}</span>
-                      <span className="text-xs text-gray-500">{account.email}</span>
+                      <span className="text-xs text-muted-foreground">{account.email}</span>
                     </div>
                   </Button>
                 ))}

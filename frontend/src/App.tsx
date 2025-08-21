@@ -7,8 +7,13 @@ import { TicketsPage } from './pages/TicketsPage'
 import { TicketDetailPage } from './pages/TicketDetailPage'
 import { DocumentsPage } from './pages/DocumentsPage'
 import { LoadingSpinner } from './components/LoadingSpinner'
+import { useEffect } from 'react'
 
 function App() {
+  // Apply dark theme by default
+  useEffect(() => {
+    document.documentElement.classList.add('dark')
+  }, [])
   const { isAuthenticated, isLoading, user } = useAuth()
 
   // Show loading only if we're actually checking authentication

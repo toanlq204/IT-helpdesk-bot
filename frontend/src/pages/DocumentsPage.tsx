@@ -40,14 +40,20 @@ export const DocumentsPage = () => {
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
-          <p className="text-gray-600">Manage knowledge base documents</p>
+    <div className="h-full flex flex-col bg-background">
+      <div className="border-b border-border bg-card/50 backdrop-blur-sm">
+        <div className="px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Documents</h1>
+              <p className="text-muted-foreground">Manage knowledge base documents</p>
+            </div>
+            <DocumentUpload />
+          </div>
         </div>
-        <DocumentUpload />
       </div>
+      
+      <div className="flex-1 overflow-y-auto p-6">
 
       <Card>
         <CardHeader>
@@ -68,6 +74,7 @@ export const DocumentsPage = () => {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }

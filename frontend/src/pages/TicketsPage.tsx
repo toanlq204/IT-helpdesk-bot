@@ -36,14 +36,20 @@ export const TicketsPage = () => {
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tickets</h1>
-          <p className="text-gray-600">Manage support tickets</p>
+    <div className="h-full flex flex-col bg-background">
+      <div className="border-b border-border bg-card/50 backdrop-blur-sm">
+        <div className="px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Tickets</h1>
+              <p className="text-muted-foreground">Manage support tickets</p>
+            </div>
+            <CreateTicketDialog />
+          </div>
         </div>
-        <CreateTicketDialog />
       </div>
+      
+      <div className="flex-1 overflow-y-auto p-6">
 
       {/* Tabs for technicians and admins */}
       {user?.role !== 'user' && (
@@ -100,6 +106,7 @@ export const TicketsPage = () => {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }
