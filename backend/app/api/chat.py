@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from ..core.database import get_db
 from ..models.user import User
+from ..models.conversation import Conversation
 from ..schemas.chat import ChatStart, ChatMessage, ChatResponse, ChatStartResponse, ConversationResponse
 from ..utils.auth import get_current_user
 from ..services.chat_service import (
@@ -78,3 +79,24 @@ async def get_chat_history(
         created_at=conversation.created_at,
         messages=messages
     )
+
+
+@router.get("/conversations", response_model=List[ConversationResponse])
+async def get_user_conversations(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get all conversations for the current user"""
+    conversations = db.query(Conversation).filter(
+        Conversation.user_id == current_user.id
+    ).order_by(Conversation.created_at.desc()).all()
+    
+    return [
+        ConversationResponse(
+            id=conv.id,
+            user_id=conv.user_id,
+            session_id=conv.session_id,
+            created_at=conv.created_at,
+            messages=conv.messages
+        ) for conv in conversations
+    ]

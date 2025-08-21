@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Textarea } from '../components/ui/textarea'
 import { Send, Bot, User, FileText, Sparkles } from 'lucide-react'
+import { useConversation, useChat } from '../hooks/useChat'
 
 // TODO: streaming handling
 
@@ -14,11 +16,26 @@ interface Message {
 }
 
 export const ChatPage = () => {
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const sessionId = searchParams.get('session')
+  const { conversation, isLoading: isLoadingConversation, refetch } = useConversation(sessionId || '')
+  const { startConversation, sendMessage, isSending } = useChat()
+  
   const [message, setMessage] = useState('')
-  const [messages, setMessages] = useState<Message[]>([])
+  const [localMessages, setLocalMessages] = useState<Message[]>([])
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Convert backend messages to local format
+  const messages = conversation?.messages?.map(msg => ({
+    id: msg.id.toString(),
+    role: msg.role as 'user' | 'assistant',
+    content: msg.content,
+    citations: msg.message_metadata?.citations || [],
+    timestamp: new Date(msg.created_at)
+  })) || localMessages
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -30,16 +47,9 @@ export const ChatPage = () => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!message.trim()) return
+    if (!message.trim() || isSending) return
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: message,
-      timestamp: new Date()
-    }
-
-    setMessages(prev => [...prev, userMessage])
+    const messageText = message
     setMessage('')
     setIsTyping(true)
 
@@ -48,18 +58,49 @@ export const ChatPage = () => {
       textareaRef.current.style.height = 'auto'
     }
 
-    // TODO: Replace with actual API call
-    setTimeout(() => {
+    try {
+      let currentSessionId = sessionId
+
+      // If no session exists, create a new one
+      if (!currentSessionId) {
+        const newSession = await startConversation()
+        currentSessionId = newSession.session_id
+        navigate(`/chat?session=${currentSessionId}`)
+      }
+
+      // Send message to the backend
+      if (currentSessionId) {
+        await sendMessage({
+          session_id: currentSessionId,
+          message: messageText
+        })
+
+        // Refetch conversation to get updated messages
+        await refetch()
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      
+      // Fallback to local messages if API fails
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: messageText,
+        timestamp: new Date()
+      }
+      
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `I'm a placeholder AI assistant for the IT Helpdesk. Here's what I understand from your message: "${message}"\n\nOnce the RAG system is integrated, I'll be able to search through your uploaded documents and provide specific technical guidance. For now, I can help you understand that your request has been received and will be processed by our support system.`,
-        citations: [{ filename: 'sample_guide.txt' }],
+        content: `Sorry, I'm having trouble connecting to the server. This is a placeholder response for: "${messageText}"`,
+        citations: [],
         timestamp: new Date()
       }
-      setMessages(prev => [...prev, assistantMessage])
+      
+      setLocalMessages(prev => [...prev, userMessage, assistantMessage])
+    } finally {
       setIsTyping(false)
-    }, 1500)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -81,15 +122,22 @@ export const ChatPage = () => {
       {/* Header */}
       <div className="border-b border-border bg-card/50 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary" />
+                      <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold text-foreground">
+                  {sessionId ? `Chat Session` : 'AI Assistant'}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  {sessionId 
+                    ? `Session ID: ${sessionId.substring(0, 8)}...`
+                    : 'Ask questions about IT support and troubleshooting'
+                  }
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-semibold text-foreground">AI Assistant</h1>
-              <p className="text-sm text-muted-foreground">Ask questions about IT support and troubleshooting</p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -126,7 +174,9 @@ export const ChatPage = () => {
             <div className="py-8 space-y-8">
               {messages.map((msg) => (
                 <div key={msg.id} className="chat-fade-in">
-                  <div className="flex items-start space-x-4">
+                  <div className={`flex items-start space-x-4 ${
+                    msg.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+                  }`}>
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                       msg.role === 'user' 
                         ? 'bg-primary text-primary-foreground' 
@@ -138,8 +188,12 @@ export const ChatPage = () => {
                         <Bot className="w-4 h-4" />
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-2">
+                    <div className={`flex-1 min-w-0 ${
+                      msg.role === 'user' ? 'text-right' : 'text-left'
+                    }`}>
+                      <div className={`flex items-center space-x-2 mb-2 ${
+                        msg.role === 'user' ? 'justify-end' : 'justify-start'
+                      }`}>
                         <span className="text-sm font-medium text-foreground">
                           {msg.role === 'user' ? 'You' : 'AI Assistant'}
                         </span>
@@ -147,13 +201,23 @@ export const ChatPage = () => {
                           {msg.timestamp.toLocaleTimeString()}
                         </span>
                       </div>
-                      <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <div className="text-foreground whitespace-pre-wrap leading-relaxed">
-                          {msg.content}
+                      <div className={`prose prose-sm dark:prose-invert max-w-none ${
+                        msg.role === 'user' ? 'text-right' : 'text-left'
+                      }`}>
+                        <div className={`inline-block px-4 py-3 rounded-2xl max-w-[80%] ${
+                          msg.role === 'user'
+                            ? 'bg-primary text-primary-foreground ml-auto'
+                            : 'bg-muted text-foreground mr-auto'
+                        }`}>
+                          <div className="whitespace-pre-wrap leading-relaxed">
+                            {msg.content}
+                          </div>
                         </div>
                       </div>
                       {msg.citations && msg.citations.length > 0 && (
-                        <div className="mt-4 flex flex-wrap gap-2">
+                        <div className={`mt-2 flex flex-wrap gap-2 ${
+                          msg.role === 'user' ? 'justify-end' : 'justify-start'
+                        }`}>
                           {msg.citations.map((citation, index) => (
                             <div
                               key={index}
@@ -170,7 +234,7 @@ export const ChatPage = () => {
                 </div>
               ))}
               
-              {isTyping && (
+              {(isTyping || isSending) && (
                 <div className="chat-fade-in">
                   <div className="flex items-start space-x-4">
                     <div className="w-8 h-8 rounded-lg bg-muted text-muted-foreground flex items-center justify-center flex-shrink-0">
@@ -179,7 +243,9 @@ export const ChatPage = () => {
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
                         <span className="text-sm font-medium text-foreground">AI Assistant</span>
-                        <span className="text-xs text-muted-foreground">typing...</span>
+                        <span className="text-xs text-muted-foreground">
+                          {isSending ? 'sending...' : 'typing...'}
+                        </span>
                       </div>
                       <div className="flex space-x-1">
                         <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
@@ -217,7 +283,7 @@ export const ChatPage = () => {
                 />
                 <Button
                   type="submit"
-                  disabled={!message.trim() || isTyping}
+                  disabled={!message.trim() || isTyping || isSending}
                   size="sm"
                   className="absolute right-2 bottom-2 h-8 w-8 p-0"
                 >

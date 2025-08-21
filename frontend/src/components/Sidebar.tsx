@@ -1,5 +1,6 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { useChat } from '../hooks/useChat'
 import { Button } from './ui/button'
 import { 
   MessageSquare, 
@@ -9,22 +10,21 @@ import {
   User,
   Menu,
   X,
-  HelpCircle
+  HelpCircle,
+  Plus,
+  Clock
 } from 'lucide-react'
 import { useState } from 'react'
+import { formatDistanceToNow } from 'date-fns'
 
 export const Sidebar = () => {
   const { user, logout } = useAuth()
+  const { conversations, startConversation, isStarting } = useChat()
   const location = useLocation()
+  const navigate = useNavigate()
   const [isCollapsed, setIsCollapsed] = useState(false)
 
   const navigation = [
-    { 
-      name: 'Chat', 
-      href: '/chat', 
-      icon: MessageSquare,
-      description: 'AI Assistant'
-    },
     { 
       name: 'Tickets', 
       href: '/tickets', 
@@ -38,6 +38,28 @@ export const Sidebar = () => {
       description: 'Knowledge Base'
     }] : []),
   ]
+
+  const handleNewChat = async () => {
+    try {
+      const result = await startConversation()
+      navigate(`/chat?session=${result.session_id}`)
+    } catch (error) {
+      console.error('Failed to start conversation:', error)
+      // Fallback to regular chat page
+      navigate('/chat')
+    }
+  }
+
+  const getConversationPreview = (conversation: any) => {
+    const lastMessage = conversation.messages?.[conversation.messages.length - 1]
+    if (!lastMessage) return 'New conversation'
+    
+    const preview = lastMessage.role === 'user' 
+      ? lastMessage.content 
+      : 'AI: ' + lastMessage.content
+    
+    return preview.length > 50 ? preview.substring(0, 50) + '...' : preview
+  }
 
   const isActive = (href: string) => {
     return location.pathname === href || location.pathname.startsWith(href + '/')
@@ -83,8 +105,73 @@ export const Sidebar = () => {
         </div>
       </div>
 
+      {/* New Chat Button */}
+      <div className="p-4 border-b border-border">
+        <Button
+          onClick={handleNewChat}
+          disabled={isStarting}
+          className={`w-full justify-start ${isCollapsed ? 'px-2' : ''}`}
+          variant="outline"
+        >
+          <Plus className="w-4 h-4 flex-shrink-0" />
+          {!isCollapsed && <span className="ml-2">New Chat</span>}
+        </Button>
+      </div>
+
+      {/* Conversations List */}
+      {!isCollapsed && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="px-4 py-2">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Recent Conversations
+            </h3>
+          </div>
+          <div className="flex-1 overflow-y-auto px-4 space-y-1 scrollbar-hide">
+            {conversations.length === 0 ? (
+              <div className="text-center py-8">
+                <MessageSquare className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No conversations yet</p>
+                <p className="text-xs text-muted-foreground">Start a new chat to begin</p>
+              </div>
+            ) : (
+              conversations.map((conversation) => {
+                const isActive = location.pathname === '/chat' && 
+                  new URLSearchParams(location.search).get('session') === conversation.session_id
+                
+                return (
+                  <Link
+                    key={conversation.id}
+                    to={`/chat?session=${conversation.session_id}`}
+                    className={`block rounded-lg p-3 transition-all duration-200 group ${
+                      isActive 
+                        ? 'bg-primary/10 text-primary border border-primary/20' 
+                        : 'text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--sidebar-hover))]'
+                    }`}
+                  >
+                    <div className="flex items-start space-x-3">
+                      <MessageSquare className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {getConversationPreview(conversation)}
+                        </p>
+                        <div className="flex items-center mt-1 text-xs">
+                          <Clock className="w-3 h-3 mr-1" />
+                          <span>
+                            {formatDistanceToNow(new Date(conversation.created_at), { addSuffix: true })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Navigation */}
-      <div className="flex-1 p-4 space-y-2">
+      <div className="border-t border-border p-4 space-y-2">
         {navigation.map((item) => {
           const Icon = item.icon
           const active = isActive(item.href)
