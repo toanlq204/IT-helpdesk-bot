@@ -50,15 +50,25 @@ export const Sidebar = () => {
     }
   }
 
+  const getConversationTitle = (conversation: any) => {
+    // Use the first user message as the conversation title
+    const firstUserMessage = conversation.messages?.find((msg: any) => msg.role === 'user')
+    if (!firstUserMessage) return 'New conversation'
+    
+    const title = firstUserMessage.content.trim()
+    return title.length > 40 ? title.substring(0, 40) + '...' : title
+  }
+
   const getConversationPreview = (conversation: any) => {
     const lastMessage = conversation.messages?.[conversation.messages.length - 1]
-    if (!lastMessage) return 'New conversation'
+    if (!lastMessage) return 'Start a conversation'
     
+    // Show preview of the last message
     const preview = lastMessage.role === 'user' 
       ? lastMessage.content 
-      : 'AI: ' + lastMessage.content
+      : lastMessage.content
     
-    return preview.length > 50 ? preview.substring(0, 50) + '...' : preview
+    return preview.length > 35 ? preview.substring(0, 35) + '...' : preview
   }
 
   const isActive = (href: string) => {
@@ -151,15 +161,18 @@ export const Sidebar = () => {
                     <div className="flex items-start space-x-3">
                       <MessageSquare className="w-4 h-4 flex-shrink-0 mt-0.5" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
+                        <p className="text-sm font-medium truncate leading-tight">
+                          {getConversationTitle(conversation)}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate mt-1">
                           {getConversationPreview(conversation)}
                         </p>
-                        <div className="flex items-center mt-1 text-xs">
+                        {/* <div className="flex items-center mt-1 text-xs text-muted-foreground">
                           <Clock className="w-3 h-3 mr-1" />
                           <span>
                             {formatDistanceToNow(new Date(conversation.created_at), { addSuffix: true })}
                           </span>
-                        </div>
+                        </div> */}
                       </div>
                     </div>
                   </Link>

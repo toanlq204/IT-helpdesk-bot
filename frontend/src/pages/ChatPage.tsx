@@ -37,6 +37,20 @@ export const ChatPage = () => {
     timestamp: new Date(msg.created_at)
   })) || localMessages
 
+  // Generate conversation title from first user message
+  const getConversationTitle = () => {
+    if (!sessionId) return 'New Chat'
+    
+    const firstUserMessage = messages.find(msg => msg.role === 'user')
+    if (!firstUserMessage) return 'New Conversation'
+    
+    // Use first 50 characters of the first message as title
+    const title = firstUserMessage.content.trim()
+    return title.length > 50 ? title.substring(0, 50) + '...' : title
+  }
+
+  const conversationTitle = getConversationTitle()
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
@@ -126,13 +140,13 @@ export const ChatPage = () => {
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-primary" />
               </div>
-              <div>
-                <h1 className="text-xl font-semibold text-foreground">
-                  {sessionId ? `Chat Session` : 'AI Assistant'}
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl font-semibold text-foreground truncate">
+                  {conversationTitle}
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   {sessionId 
-                    ? `Session ID: ${sessionId.substring(0, 8)}...`
+                    ? `IT Support Chat • ${messages.length} message${messages.length !== 1 ? 's' : ''}`
                     : 'Ask questions about IT support and troubleshooting'
                   }
                 </p>
