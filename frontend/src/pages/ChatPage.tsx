@@ -4,6 +4,7 @@ import { Button } from '../components/ui/button'
 import { Textarea } from '../components/ui/textarea'
 import { Send, Bot, User, FileText, Sparkles } from 'lucide-react'
 import { useConversation, useChat } from '../hooks/useChat'
+import { MarkdownMessage } from '../components/MarkdownMessage'
 
 // TODO: streaming handling
 
@@ -19,7 +20,7 @@ export const ChatPage = () => {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const sessionId = searchParams.get('session')
-  const { conversation, isLoading: isLoadingConversation, refetch } = useConversation(sessionId || '')
+  const { conversation, refetch } = useConversation(sessionId || '')
   const { startConversation, sendMessage, isSending } = useChat()
   
   const [message, setMessage] = useState('')
@@ -28,14 +29,22 @@ export const ChatPage = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  // Convert backend messages to local format
-  const messages = conversation?.messages?.map(msg => ({
+  // Convert backend messages to local format and combine with local messages
+  const serverMessages = conversation?.messages?.map(msg => ({
     id: msg.id.toString(),
     role: msg.role as 'user' | 'assistant',
     content: msg.content,
     citations: msg.message_metadata?.citations || [],
     timestamp: new Date(msg.created_at)
-  })) || localMessages
+  })) || []
+
+  // Combine server messages with local messages (local messages for immediate feedback)
+  // If we have server messages, use them as the base and add any local messages that aren't duplicates
+  const messages = sessionId && serverMessages.length > 0 
+    ? [...serverMessages, ...localMessages.filter(localMsg => 
+        !serverMessages.some(serverMsg => serverMsg.content === localMsg.content)
+      )]
+    : localMessages
 
   // Generate conversation title from first user message
   const getConversationTitle = () => {
@@ -59,18 +68,35 @@ export const ChatPage = () => {
     scrollToBottom()
   }, [messages])
 
+  // Clear local messages when switching conversations
+  useEffect(() => {
+    setLocalMessages([])
+  }, [sessionId])
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!message.trim() || isSending) return
 
     const messageText = message
     setMessage('')
-    setIsTyping(true)
 
     // Auto-resize textarea
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
     }
+
+    // Create user message and add it immediately (optimistic UI)
+    const userMessage: Message = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: messageText,
+      timestamp: new Date()
+    }
+
+    // Add user message immediately to local state for instant feedback
+    setLocalMessages(prev => [...prev, userMessage])
+
+    setIsTyping(true)
 
     try {
       let currentSessionId = sessionId
@@ -89,29 +115,25 @@ export const ChatPage = () => {
           message: messageText
         })
 
-        // Refetch conversation to get updated messages
+        // Refetch conversation to get updated messages (including assistant response)
         await refetch()
+        
+        // Clear local messages since we now have the full conversation from the server
+        setLocalMessages([])
       }
     } catch (error) {
       console.error('Failed to send message:', error)
       
-      // Fallback to local messages if API fails
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        role: 'user',
-        content: messageText,
-        timestamp: new Date()
-      }
-      
+      // Add error message to local state
       const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: `assistant-${Date.now()}`,
         role: 'assistant',
-        content: `Sorry, I'm having trouble connecting to the server. This is a placeholder response for: "${messageText}"`,
+        content: `Sorry, I'm having trouble connecting to the server. Please try again later.`,
         citations: [],
         timestamp: new Date()
       }
       
-      setLocalMessages(prev => [...prev, userMessage, assistantMessage])
+      setLocalMessages(prev => [...prev, assistantMessage])
     } finally {
       setIsTyping(false)
     }
@@ -223,16 +245,20 @@ export const ChatPage = () => {
                             ? 'bg-primary text-primary-foreground ml-auto'
                             : 'bg-muted text-foreground mr-auto'
                         }`}>
-                          <div className="whitespace-pre-wrap leading-relaxed">
-                            {msg.content}
-                          </div>
+                          {msg.role === 'user' ? (
+                            <div className="whitespace-pre-wrap leading-relaxed">
+                              {msg.content}
+                            </div>
+                          ) : (
+                            <MarkdownMessage content={msg.content} />
+                          )}
                         </div>
                       </div>
                       {msg.citations && msg.citations.length > 0 && (
                         <div className={`mt-2 flex flex-wrap gap-2 ${
                           msg.role === 'user' ? 'justify-end' : 'justify-start'
                         }`}>
-                          {msg.citations.map((citation, index) => (
+                          {msg.citations.map((citation: { filename: string }, index: number) => (
                             <div
                               key={index}
                               className="inline-flex items-center space-x-1 px-2 py-1 bg-muted rounded-md text-xs"

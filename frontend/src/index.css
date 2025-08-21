@@ -71,4 +71,58 @@
     background: linear-gradient(90deg, transparent, hsl(var(--border)), transparent);
     height: 1px;
   }
+  
+  /* Markdown content styles */
+  .markdown-content {
+    @apply text-sm;
+  }
+  
+  .markdown-content p:last-child {
+    @apply mb-0;
+  }
+  
+  .markdown-content ul li,
+  .markdown-content ol li {
+    @apply pl-1;
+  }
+  
+  .markdown-content pre {
+    @apply text-xs;
+  }
+  
+  .markdown-content code:not(pre code) {
+    @apply text-xs;
+  }
+  
+  /* Override highlight.js styles for dark theme */
+  .hljs {
+    @apply bg-muted text-foreground !important;
+  }
+  
+  .hljs-comment,
+  .hljs-quote {
+    @apply text-muted-foreground !important;
+  }
+  
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-literal,
+  .hljs-type {
+    @apply text-blue-400 !important;
+  }
+  
+  .hljs-string,
+  .hljs-title {
+    @apply text-green-400 !important;
+  }
+  
+  .hljs-number,
+  .hljs-attr {
+    @apply text-yellow-400 !important;
+  }
+  
+  .hljs-built_in,
+  .hljs-builtin-name {
+    @apply text-purple-400 !important;
+  }
 }
