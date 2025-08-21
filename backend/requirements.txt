@@ -20,3 +20,6 @@ langchain-pinecone
 pinecone-client
 openai
 tiktoken
+
+# Additional LangChain dependencies for chat
+langchain-core

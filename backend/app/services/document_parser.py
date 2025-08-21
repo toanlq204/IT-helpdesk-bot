@@ -37,7 +37,7 @@ class DocumentProcessor:
         if settings.OPENAI_API_KEY:
             try:
                 self.embeddings = OpenAIEmbeddings(
-                    openai_api_base=settings.OPENAI_API_BASE, #"https://aiportalapi.stu-platform.live/jpe",
+                    openai_api_base=settings.OPENAI_API_BASE,
                     api_key=settings.OPENAI_API_KEY,
                     model=settings.EMBEDDING_MODEL
                 )
