@@ -61,14 +61,27 @@ export const TicketCard = ({ ticket, onClick }: TicketCardProps) => {
       <CardContent>
         <p className="text-gray-700 mb-4 line-clamp-2">{ticket.description}</p>
         <div className="flex items-center justify-between text-sm text-gray-500">
-          <span>
-            Created {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}
-          </span>
-          {ticket.assigned_to && (
+          <div className="flex flex-col space-y-1">
             <span>
-              Assigned {ticket.assigned_to === user?.id ? 'to you' : `to user #${ticket.assigned_to}`}
+              Created {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}
             </span>
-          )}
+            <span>
+              By {ticket.creator?.email || `User #${ticket.created_by}`}
+            </span>
+          </div>
+          <div className="text-right">
+            {ticket.assigned_to ? (
+              <span>
+                Assigned to {
+                  ticket.assigned_to === user?.id 
+                    ? 'you' 
+                    : (ticket.assignee?.email || `User #${ticket.assigned_to}`)
+                }
+              </span>
+            ) : (
+              <span className="text-orange-600">Unassigned</span>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

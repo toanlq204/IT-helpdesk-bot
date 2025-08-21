@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useTicket, useTickets } from '../hooks/useTickets'
+import { useTicket, useTickets, useTechnicians } from '../hooks/useTickets'
 import { useAuthStore } from '../store/auth'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
@@ -18,7 +18,9 @@ import {
   MessageSquare,
   Lock,
   Plus,
-  Edit
+  Edit,
+  UserPlus,
+  UserX
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -26,7 +28,8 @@ export const TicketDetailPage = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuthStore()
-  const { updateTicket, addNote, isUpdating } = useTickets()
+  const { updateTicket, addNote, assignTicket, unassignTicket, isUpdating, isAssigning } = useTickets()
+  const { technicians, isLoading: isLoadingTechnicians } = useTechnicians()
   
   const ticketId = id ? parseInt(id) : 0
   const { ticket, isLoading, error, refetch } = useTicket(ticketId)
@@ -36,6 +39,8 @@ export const TicketDetailPage = () => {
   const [isInternalNote, setIsInternalNote] = useState(false)
   const [isEditingStatus, setIsEditingStatus] = useState(false)
   const [newStatus, setNewStatus] = useState<string>('')
+  const [isAssigningUser, setIsAssigningUser] = useState(false)
+  const [selectedAssignee, setSelectedAssignee] = useState<string>('')
 
   if (isLoading) {
     return (
@@ -76,6 +81,8 @@ export const TicketDetailPage = () => {
   const canManageTicket = user?.role === 'admin' || user?.role === 'technician'
   const canSeeInternalNotes = canManageTicket
   const isTicketOwner = ticket.created_by === user?.id
+  const canAssignToOthers = user?.role === 'admin'
+  const canSelfAssign = user?.role === 'technician' && !ticket.assigned_to
 
   // Filter notes based on user role
   const visibleNotes = ticket.notes.filter(note => {
@@ -152,6 +159,45 @@ export const TicketDetailPage = () => {
     }
   }
 
+  const handleAssignTicket = async () => {
+    if (!selectedAssignee) return
+
+    try {
+      await assignTicket({
+        ticketId: ticket.id,
+        userId: parseInt(selectedAssignee)
+      })
+      await refetch()
+      setIsAssigningUser(false)
+      setSelectedAssignee('')
+    } catch (error) {
+      console.error('Failed to assign ticket:', error)
+    }
+  }
+
+  const handleSelfAssign = async () => {
+    if (!user?.id) return
+
+    try {
+      await assignTicket({
+        ticketId: ticket.id,
+        userId: user.id
+      })
+      await refetch()
+    } catch (error) {
+      console.error('Failed to self-assign ticket:', error)
+    }
+  }
+
+  const handleUnassign = async () => {
+    try {
+      await unassignTicket(ticket.id)
+      await refetch()
+    } catch (error) {
+      console.error('Failed to unassign ticket:', error)
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header */}
@@ -173,6 +219,57 @@ export const TicketDetailPage = () => {
         
         {canManageTicket && (
           <div className="flex items-center space-x-2">
+            {/* Assignment controls */}
+            {isAssigningUser ? (
+              <div className="flex items-center space-x-2">
+                <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Select technician" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {technicians.map((tech) => (
+                      <SelectItem key={tech.id} value={tech.id.toString()}>
+                        {tech.email} ({tech.role})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button size="sm" onClick={handleAssignTicket} disabled={isAssigning || !selectedAssignee}>
+                  Assign
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => {
+                  setIsAssigningUser(false)
+                  setSelectedAssignee('')
+                }}>
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <>
+                {canAssignToOthers && (
+                  <Button size="sm" variant="outline" onClick={() => setIsAssigningUser(true)}>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    {ticket.assigned_to ? 'Reassign' : 'Assign'}
+                  </Button>
+                )}
+                
+                {canSelfAssign && (
+                  <Button size="sm" variant="outline" onClick={handleSelfAssign} disabled={isAssigning}>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Assign to Me
+                  </Button>
+                )}
+                
+                {canAssignToOthers && ticket.assigned_to && (
+                  <Button size="sm" variant="outline" onClick={handleUnassign} disabled={isAssigning}>
+                    <UserX className="w-4 h-4 mr-2" />
+                    Unassign
+                  </Button>
+                )}
+              </>
+            )}
+
+            {/* Status controls */}
             {isEditingStatus ? (
               <div className="flex items-center space-x-2">
                 <Select value={newStatus} onValueChange={setNewStatus}>
@@ -321,9 +418,16 @@ export const TicketDetailPage = () => {
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center space-x-2">
                           <User className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">
-                            User #{note.author_id}
-                          </span>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium">
+                              {note.author?.email || `User #${note.author_id}`}
+                            </span>
+                            {note.author?.role && (
+                              <Badge variant="outline" className="text-xs">
+                                {note.author.role}
+                              </Badge>
+                            )}
+                          </div>
                           {note.is_internal && (
                             <Badge variant="secondary" className="text-xs">
                               <Lock className="w-3 h-3 mr-1" />
@@ -388,19 +492,37 @@ export const TicketDetailPage = () => {
                 <User className="w-4 h-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm text-muted-foreground">Created by</p>
-                  <p className="font-medium">User #{ticket.created_by}</p>
+                  <p className="font-medium">
+                    {ticket.creator?.email || `User #${ticket.created_by}`}
+                  </p>
+                  {ticket.creator?.role && (
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {ticket.creator.role}
+                    </p>
+                  )}
                 </div>
               </div>
               
-              {ticket.assigned_to && (
-                <div className="flex items-center space-x-2">
-                  <User className="w-4 h-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Assigned to</p>
-                    <p className="font-medium">User #{ticket.assigned_to}</p>
-                  </div>
+              <div className="flex items-center space-x-2">
+                <User className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Assigned to</p>
+                  {ticket.assigned_to ? (
+                    <>
+                      <p className="font-medium">
+                        {ticket.assignee?.email || `User #${ticket.assigned_to}`}
+                      </p>
+                      {ticket.assignee?.role && (
+                        <p className="text-xs text-muted-foreground capitalize">
+                          {ticket.assignee.role}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="font-medium text-muted-foreground">Unassigned</p>
+                  )}
                 </div>
-              )}
+              </div>
               
               <div className="flex items-center space-x-2">
                 <Clock className="w-4 h-4 text-muted-foreground" />
@@ -455,6 +577,57 @@ export const TicketDetailPage = () => {
                   <Lock className="w-4 h-4 mr-2" />
                   Add Internal Note
                 </Button>
+
+                {/* Assignment Actions */}
+                {canSelfAssign && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full justify-start"
+                    onClick={handleSelfAssign}
+                    disabled={isAssigning}
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Assign to Me
+                  </Button>
+                )}
+
+                {canAssignToOthers && !ticket.assigned_to && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full justify-start"
+                    onClick={() => setIsAssigningUser(true)}
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Assign Ticket
+                  </Button>
+                )}
+
+                {canAssignToOthers && ticket.assigned_to && (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full justify-start"
+                      onClick={() => setIsAssigningUser(true)}
+                    >
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Reassign
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full justify-start"
+                      onClick={handleUnassign}
+                      disabled={isAssigning}
+                    >
+                      <UserX className="w-4 h-4 mr-2" />
+                      Unassign
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
           )}

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ticketsApi, Ticket, CreateTicketRequest, UpdateTicketRequest, CreateNoteRequest } from '../api/tickets'
+import { ticketsApi, Ticket, CreateTicketRequest, UpdateTicketRequest, CreateNoteRequest, User } from '../api/tickets'
 
 export const useTickets = () => {
   const queryClient = useQueryClient()
@@ -42,6 +42,22 @@ export const useTickets = () => {
     },
   })
 
+  const assignTicketMutation = useMutation({
+    mutationFn: ({ ticketId, userId }: { ticketId: number; userId: number }) =>
+      ticketsApi.assignTicket(ticketId, userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tickets'] })
+    },
+  })
+
+  const unassignTicketMutation = useMutation({
+    mutationFn: (ticketId: number) =>
+      ticketsApi.unassignTicket(ticketId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tickets'] })
+    },
+  })
+
   return {
     tickets: ticketsQuery.data || [],
     unassignedTickets: unassignedTicketsQuery.data || [],
@@ -51,8 +67,11 @@ export const useTickets = () => {
     createTicket: createTicketMutation.mutateAsync,
     updateTicket: updateTicketMutation.mutateAsync,
     addNote: addNoteMutation.mutateAsync,
+    assignTicket: assignTicketMutation.mutateAsync,
+    unassignTicket: unassignTicketMutation.mutateAsync,
     isCreating: createTicketMutation.isPending,
     isUpdating: updateTicketMutation.isPending,
+    isAssigning: assignTicketMutation.isPending || unassignTicketMutation.isPending,
   }
 }
 
@@ -70,5 +89,18 @@ export const useTicket = (id: number) => {
     isLoading: ticketQuery.isLoading,
     error: ticketQuery.error,
     refetch: ticketQuery.refetch,
+  }
+}
+
+export const useTechnicians = () => {
+  const techniciansQuery = useQuery({
+    queryKey: ['technicians'],
+    queryFn: ticketsApi.getTechnicians,
+  })
+
+  return {
+    technicians: techniciansQuery.data || [],
+    isLoading: techniciansQuery.isLoading,
+    error: techniciansQuery.error,
   }
 }

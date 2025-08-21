@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, List
+from .auth import UserResponse
 
 
 class TicketBase(BaseModel):
@@ -30,6 +31,7 @@ class TicketNoteResponse(BaseModel):
     id: int
     ticket_id: int
     author_id: int
+    author: Optional[UserResponse] = None
     body: str
     is_internal: bool
     created_at: datetime
@@ -41,7 +43,9 @@ class TicketNoteResponse(BaseModel):
 class TicketResponse(TicketBase):
     id: int
     created_by: int
+    creator: Optional[UserResponse] = None
     assigned_to: Optional[int] = None
+    assignee: Optional[UserResponse] = None
     status: str
     created_at: datetime
     updated_at: datetime

@@ -1,9 +1,17 @@
 import { apiClient } from './client'
 
+export interface User {
+  id: number
+  email: string
+  role: string
+}
+
 export interface Ticket {
   id: number
   created_by: number
+  creator?: User
   assigned_to?: number
+  assignee?: User
   title: string
   description: string
   status: 'open' | 'in_progress' | 'resolved' | 'closed'
@@ -17,6 +25,7 @@ export interface TicketNote {
   id: number
   ticket_id: number
   author_id: number
+  author?: User
   body: string
   is_internal: boolean
   created_at: string
@@ -74,6 +83,21 @@ export const ticketsApi = {
 
   addNote: async (ticketId: number, note: CreateNoteRequest): Promise<TicketNote> => {
     const response = await apiClient.post(`/tickets/${ticketId}/notes`, note)
+    return response.data
+  },
+
+  getTechnicians: async (): Promise<User[]> => {
+    const response = await apiClient.get('/tickets/technicians')
+    return response.data
+  },
+
+  assignTicket: async (ticketId: number, userId: number): Promise<Ticket> => {
+    const response = await apiClient.post(`/tickets/${ticketId}/assign/${userId}`)
+    return response.data
+  },
+
+  unassignTicket: async (ticketId: number): Promise<Ticket> => {
+    const response = await apiClient.post(`/tickets/${ticketId}/unassign`)
     return response.data
   },
 }

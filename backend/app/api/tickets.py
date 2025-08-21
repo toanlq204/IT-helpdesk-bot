@@ -4,10 +4,12 @@ from typing import List
 from ..core.database import get_db
 from ..models.user import User
 from ..schemas.ticket import TicketCreate, TicketUpdate, TicketResponse, TicketNoteCreate, TicketNoteResponse
+from ..schemas.auth import UserResponse
 from ..utils.auth import get_current_user
 from ..services.ticket_service import (
     create_ticket, get_tickets_for_user, get_ticket_by_id,
-    update_ticket, add_ticket_note, get_unassigned_tickets, get_assigned_tickets
+    update_ticket, add_ticket_note, get_unassigned_tickets, get_assigned_tickets,
+    assign_ticket, unassign_ticket
 )
 
 router = APIRouter()
@@ -60,6 +62,26 @@ async def list_assigned_tickets(
     return get_assigned_tickets(db, current_user.id)
 
 
+@router.get("/technicians", response_model=List[UserResponse])
+async def get_technicians(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get list of technicians for ticket assignment (admin/technician only)"""
+    if current_user.role not in ["admin", "technician"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions"
+        )
+    
+    # Get all technicians and admins who can be assigned tickets
+    technicians = db.query(User).filter(
+        User.role.in_(["technician", "admin"])
+    ).order_by(User.email).all()
+    
+    return technicians
+
+
 @router.get("/{ticket_id}", response_model=TicketResponse)
 async def get_ticket(
     ticket_id: int,
@@ -108,3 +130,36 @@ async def add_note_to_ticket(
             detail="Ticket not found or note creation not allowed"
         )
     return ticket_note
+
+
+@router.post("/{ticket_id}/assign/{user_id}", response_model=TicketResponse)
+async def assign_ticket_endpoint(
+    ticket_id: int,
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Assign a ticket to a user"""
+    ticket = assign_ticket(db, ticket_id, user_id, current_user)
+    if not ticket:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ticket not found or assignment not allowed"
+        )
+    return ticket
+
+
+@router.post("/{ticket_id}/unassign", response_model=TicketResponse)
+async def unassign_ticket_endpoint(
+    ticket_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Unassign a ticket (admin only)"""
+    ticket = unassign_ticket(db, ticket_id, current_user)
+    if not ticket:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ticket not found or unassignment not allowed"
+        )
+    return ticket
