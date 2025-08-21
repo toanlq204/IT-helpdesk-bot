@@ -35,6 +35,14 @@ async def send_message(
     # Get or create conversation
     conversation = get_or_create_conversation(db, current_user.id, chat_message.session_id)
     
+    messages = [{
+        "role": msg.role,
+        "content": msg.content,
+        "metadata": msg.metadata
+    } for msg in conversation.messages]
+
+    user_message = chat_message.message
+
     # Add user message
     add_message(db, conversation.id, "user", chat_message.message)
     

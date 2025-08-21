@@ -134,7 +134,7 @@ export const DocumentUpload = () => {
                 onDragOver={handleDragOver}
               >
                 {selectedFile ? (
-                  <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div className="flex items-center justify-between p-2 rounded">
                     <div className="flex items-center">
                       <File className="w-4 h-4 mr-2 text-blue-500" />
                       <div className="text-left">
