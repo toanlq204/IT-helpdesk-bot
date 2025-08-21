@@ -10,9 +10,10 @@ from ..schemas.document import DocumentResponse, DocumentWithText
 from ..utils.auth import get_admin_user
 from ..repositories.document_repository import (
     create_document, get_documents, get_document_by_id, 
-    update_document_status, delete_document, create_document_text
+    update_document_status, delete_document, create_document_text,
+    process_document_with_rag
 )
-from ..services.document_parser import extract_text_from_file
+from ..services.document_parser import extract_text_from_file, document_processor
 
 router = APIRouter()
 
@@ -65,16 +66,17 @@ async def upload_document(
         user_id=current_user.id
     )
     
-    # Extract text and update status
+    # Process document with enhanced RAG pipeline
     try:
-        extracted_text = extract_text_from_file(file_path, file.content_type)
-        if extracted_text:
-            create_document_text(db, document.id, extracted_text)
-            update_document_status(db, document.id, "parsed")
+        result = process_document_with_rag(db, document)
+        if result["success"]:
+            print(f"Successfully processed document {file.filename}: "
+                 f"{result['chunks_created']} chunks, "
+                 f"{result['vectors_stored']} vectors stored")
         else:
-            update_document_status(db, document.id, "failed")
+            print(f"Failed to process document {file.filename}: {result.get('error')}")
     except Exception as e:
-        print(f"Error parsing document {file.filename}: {e}")
+        print(f"Error processing document {file.filename}: {e}")
         update_document_status(db, document.id, "failed")
     
     # Refresh document to get updated status
@@ -153,19 +155,23 @@ async def reparse_document(
             detail="Document not found"
         )
     
-    # Re-extract text
+    # Delete existing text and vectors
     try:
-        extracted_text = extract_text_from_file(document.filepath, document.content_type)
-        if extracted_text:
-            # Delete existing text
-            from ..models.document import DocumentText
-            db.query(DocumentText).filter(DocumentText.document_id == document_id).delete()
-            
-            # Create new text record
-            create_document_text(db, document.id, extracted_text)
-            update_document_status(db, document.id, "parsed")
+        from ..models.document import DocumentText
+        db.query(DocumentText).filter(DocumentText.document_id == document_id).delete()
+        
+        # Delete vectors from Pinecone if available
+        document_processor.delete_document_vectors(document_id)
+        
+        # Re-process with enhanced RAG pipeline
+        result = process_document_with_rag(db, document)
+        if result["success"]:
+            print(f"Successfully reprocessed document {document.filename}: "
+                 f"{result['chunks_created']} chunks, "
+                 f"{result['vectors_stored']} vectors stored")
         else:
-            update_document_status(db, document.id, "failed")
+            raise Exception(result.get('error', 'Unknown error'))
+            
     except Exception as e:
         print(f"Error reparsing document {document.filename}: {e}")
         update_document_status(db, document.id, "failed")
@@ -176,3 +182,33 @@ async def reparse_document(
     
     db.refresh(document)
     return document
+
+
+@router.get("/search/{query}")
+async def search_documents_endpoint(
+    query: str,
+    limit: int = 5,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user)
+):
+    """Search documents using vector similarity (admin only)"""
+    from ..repositories.document_repository import search_documents
+    
+    if not query.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Query cannot be empty"
+        )
+    
+    try:
+        results = search_documents(query, limit=limit)
+        return {
+            "query": query,
+            "results": results,
+            "count": len(results)
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Search failed: {str(e)}"
+        )

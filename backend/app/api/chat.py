@@ -47,7 +47,7 @@ async def send_message(
     add_message(db, conversation.id, "user", chat_message.message)
     
     # Generate placeholder response
-    response_data = placeholder_reply(db, current_user.id, chat_message.session_id, chat_message.message)
+    response_data = placeholder_reply(db, current_user.id, chat_message.session_id, chat_message.message, messages)
     
     # Add assistant message
     add_message(db, conversation.id, "assistant", response_data["reply"], message_metadata={"citations": response_data["citations"]})

@@ -3,34 +3,83 @@ from sqlalchemy.orm import Session
 from typing import Dict, List
 from ..models.conversation import Conversation, Message
 from ..models.document import Document
+from ..repositories.document_repository import search_documents
+from ..core.config import settings
+import logging
 
-# TODO: replace placeholder_reply with LangChain+Retriever pipeline
+logger = logging.getLogger(__name__)
 
-def placeholder_reply(db: Session, user_id: int, session_id: str, text: str) -> Dict:
+# TODO: replace enhanced_reply with full LangChain+LLM pipeline
+
+def enhanced_reply(db: Session, user_id: int, session_id: str, text: str, messages: List[Dict]) -> Dict:
     """
-    Returns a canned response. 
-    Optionally surfaces up to 3 recently parsed document filenames to pretend as 'related'.
-    NO embeddings, NO LLM. Pure placeholder.
+    Enhanced response using vector search to find relevant document chunks.
+    Still a placeholder for LLM integration, but now uses actual RAG search.
     """
-    # Get recent document filenames
-    recent_docs = db.query(Document).filter(
-        Document.status == "parsed"
-    ).order_by(Document.uploaded_at.desc()).limit(3).all()
-    
-    related_filenames = [doc.filename for doc in recent_docs]
-    
-    reply = (
-        "🔧 Placeholder response:\n"
-        f"• You said: \"{text}\"\n"
-        "• I'll use your uploaded documents to answer once RAG is connected.\n"
-    )
-    
-    if related_filenames:
-        reply += "• Potential sources:\n" + "\n".join([f"  - {f}" for f in related_filenames])
-    
-    citations = [{"filename": filename} for filename in related_filenames]
-    
-    return {"reply": reply, "citations": citations}
+    try:
+        # Search for relevant document chunks using vector similarity
+        relevant_chunks = search_documents(text, limit=3)
+        
+        if relevant_chunks:
+            # Extract unique filenames from the chunks
+            unique_filenames = list(set([
+                chunk["metadata"].get("filename", "Unknown") 
+                for chunk in relevant_chunks
+            ]))
+            
+            # Create a more intelligent response based on search results
+            reply = (
+                "🤖 Enhanced AI Assistant Response:\n\n"
+                f"Based on your question: \"{text}\"\n\n"
+                "I found relevant information in your knowledge base:\n\n"
+            )
+            
+            # Add content from relevant chunks
+            for i, chunk in enumerate(relevant_chunks):  # Limit to top 2 chunks
+                content_preview = chunk["content"]
+                filename = chunk["metadata"].get("filename", "Unknown")
+                
+                reply += f"**Source {i}** ({filename}):\n"
+                reply += f"{content_preview}\n\n"
+            
+            reply += "💡 **AI Analysis**: This information from your uploaded documents should help answer your question. "
+            reply += "Once full LLM integration is complete, I'll provide more comprehensive analysis and synthesis.\n\n"
+            
+            if len(relevant_chunks) > 2:
+                reply += f"📚 Found {len(relevant_chunks)} total relevant sections across your documents."
+            
+            citations = [{"filename": filename} for filename in unique_filenames]
+            
+        else:
+            # Fallback to basic response if no relevant chunks found
+            reply = (
+                f"I understand you're asking about: \"{text}\"\n\n"
+                "I couldn't find specific information in your uploaded documents that directly relates to this question. "
+            )
+            citations = []
+        
+        return {"reply": reply, "citations": citations}
+        
+    except Exception as e:
+        logger.error(f"Error in enhanced_reply: {e}")
+        # Fallback to simple response
+        return {
+            "reply": (
+                "🔧 AI Assistant (Fallback Mode):\n\n"
+                f"I received your question: \"{text}\"\n\n"
+                "I'm currently experiencing some technical difficulties accessing the knowledge base. "
+                "Please try again in a moment, or contact your system administrator if the issue persists.\n\n"
+                f"Error: {str(e)}"
+            ),
+            "citations": []
+        }
+
+
+def placeholder_reply(db: Session, user_id: int, session_id: str, text: str, messages: List[Dict]) -> Dict:
+    """
+    Backward compatibility wrapper - now uses enhanced_reply
+    """
+    return enhanced_reply(db, user_id, session_id, text, messages)
 
 
 def get_or_create_conversation(db: Session, user_id: int, session_id: str = None) -> Conversation:
