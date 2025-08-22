@@ -1,6 +1,8 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
 from typing import Dict, List, Optional
+
+from ..models.user import User
 from ..models.conversation import Conversation, Message
 from ..models.document import Document
 from ..repositories.document_repository import search_documents
@@ -11,7 +13,11 @@ import logging
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain.schema import BaseMessage
-
+from langgraph.graph import StateGraph, END, START
+from langgraph.prebuilt import ToolNode, tools_condition
+from typing import TypedDict, List
+from langchain.tools import tool
+from ..services.workflow import run_workflow
 logger = logging.getLogger(__name__)
 
 
@@ -104,8 +110,23 @@ class ITSupportChatService:
         except Exception as e:
             logger.error(f"Error getting relevant context: {e}")
             return "Error retrieving context from knowledge base."
+
+    def _init_lang_graph(self):
+        """Initialize the LangGraph agent"""
+        if not self.llm:
+            return
+        
+        # Initialize LangGraph agent
+        graph = StateGraph(State)
+        
+        # Add nodes
+        tool_node = ToolNode(tools)
+        graph.add_node("tool", tool_node)
+        
     
     def generate_response(self, 
+                         db: Session,
+                         current_user: User,
                          user_message: str, 
                          conversation_history: List[Dict],
                          session_id: str) -> Dict:
@@ -116,6 +137,12 @@ class ITSupportChatService:
             if not self.llm:
                 logger.warning("LLM not available, using fallback")
                 return self._fallback_response(user_message, conversation_history)
+
+            response = run_workflow(db, current_user, user_message, conversation_history, session_id)
+            return {
+                "reply": response,
+                "citations": []
+            }
             
             # Get relevant context from RAG
             context = self._get_relevant_context(user_message)
@@ -237,11 +264,11 @@ def enhanced_reply(db: Session, user_id: int, session_id: str, text: str, messag
     return chat_service.generate_response(text, messages, session_id)
 
 
-def placeholder_reply(db: Session, user_id: int, session_id: str, text: str, messages: List[Dict]) -> Dict:
+def placeholder_reply(db: Session, current_user: User, session_id: str, text: str, messages: List[Dict]) -> Dict:
     """
     Backward compatibility wrapper - now uses enhanced LLM reply
     """
-    return enhanced_reply(db, user_id, session_id, text, messages)
+    return chat_service.generate_response(db, current_user, text, messages, session_id)
 
 
 def get_or_create_conversation(db: Session, user_id: int, session_id: str = None) -> Conversation:
