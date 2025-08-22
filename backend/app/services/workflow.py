@@ -433,6 +433,136 @@ def get_assigned_tickets_tool_factory(db: Session, user_info: dict):
     
     return get_assigned_tickets_tool
 
+def update_ticket_status_tool_factory(db: Session, user_info: dict):
+    """Factory function to create the update ticket status tool with database access"""
+    @tool
+    def update_ticket_status_tool(ticket_id: int, new_status: str, comment: Optional[str] = None):
+        """Update the status of a ticket (for technicians and admins)
+        - ticket_id: ID of the ticket to update
+        - new_status: New status (open, in_progress, resolved, closed)
+        - comment: Optional comment explaining the status change
+        
+        Technicians can update status of tickets assigned to them (cannot close tickets)
+        Admins can update status of any ticket including closing them"""
+        try:
+            from ..services.ticket_service import update_ticket, get_ticket_by_id
+            from ..schemas.ticket import TicketUpdate
+            from ..models.user import User
+            
+            logger.info(f"Updating ticket {ticket_id} status to '{new_status}' by user {user_info['id']}")
+            
+            # Check if user has permission to use this tool
+            if user_info['role'] not in ['technician', 'admin']:
+                return {
+                    "status": "error",
+                    "message": "Only technicians and admins can update ticket status. Regular users can add notes to their tickets."
+                }
+            
+            # Validate status values
+            valid_statuses = ['open', 'in_progress', 'resolved', 'closed']
+            if new_status not in valid_statuses:
+                return {
+                    "status": "error",
+                    "message": f"Invalid status '{new_status}'. Valid statuses are: {', '.join(valid_statuses)}"
+                }
+            
+            # Additional permission check for closing tickets
+            if new_status == 'closed' and user_info['role'] == 'technician':
+                return {
+                    "status": "error",
+                    "message": "Only admins can close tickets. Technicians can mark tickets as 'resolved'."
+                }
+            
+            # Get the user from database
+            user = db.query(User).filter(User.id == user_info['id']).first()
+            if not user:
+                return {
+                    "status": "error",
+                    "message": "User not found"
+                }
+            
+            # Get the ticket first to check current status and permissions
+            ticket = get_ticket_by_id(db, ticket_id, user)
+            if not ticket:
+                return {
+                    "status": "error",
+                    "message": f"Ticket #{ticket_id} not found or you don't have permission to update it"
+                }
+            
+            # Check if status change is meaningful
+            if ticket.status == new_status:
+                return {
+                    "status": "success",
+                    "message": f"Ticket #{ticket_id} is already in '{new_status}' status",
+                    "ticket_id": ticket_id,
+                    "current_status": ticket.status,
+                    "no_change": True
+                }
+            
+            # Create the update object
+            ticket_update = TicketUpdate(status=new_status)
+            
+            # Update the ticket
+            updated_ticket = update_ticket(db, ticket_id, ticket_update, user)
+            
+            if updated_ticket:
+                # Add a system note about the status change if comment provided
+                if comment:
+                    from ..schemas.ticket import TicketNoteCreate
+                    from ..services.ticket_service import add_ticket_note
+                    
+                    note_content = f"Status changed from '{ticket.status}' to '{new_status}': {comment}"
+                    note_data = TicketNoteCreate(
+                        body=note_content,
+                        is_internal=False  # Status changes are visible to all parties
+                    )
+                    add_ticket_note(db, ticket_id, note_data, user)
+                
+                # Create status change message
+                old_status = ticket.status
+                status_emoji = {
+                    'open': '🆕',
+                    'in_progress': '🔄', 
+                    'resolved': '✅',
+                    'closed': '🔒'
+                }
+                
+                message = f"Ticket #{ticket_id} status updated successfully!\n\n"
+                message += f"Status: {status_emoji.get(old_status, '')} {old_status} → {status_emoji.get(new_status, '')} {new_status}\n"
+                message += f"Title: {updated_ticket.title}\n"
+                message += f"Priority: {updated_ticket.priority}\n"
+                message += f"Updated by: {user.email}\n"
+                
+                if comment:
+                    message += f"Comment: {comment}\n"
+                
+                return {
+                    "status": "success",
+                    "message": message,
+                    "ticket_id": updated_ticket.id,
+                    "old_status": old_status,
+                    "new_status": updated_ticket.status,
+                    "ticket_title": updated_ticket.title,
+                    "ticket_priority": updated_ticket.priority,
+                    "updated_by": user.email,
+                    "comment": comment,
+                    "updated_at": updated_ticket.updated_at.isoformat()
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": f"Failed to update ticket #{ticket_id}. You may not have permission to update this ticket or it may not exist."
+                }
+                
+        except Exception as e:
+            logger.error(f"Error updating ticket {ticket_id} status by user {user_info['id']}: {e}")
+            return {
+                "status": "error",
+                "message": f"Error updating ticket status: {str(e)}"
+            }
+    
+    return update_ticket_status_tool
+
 @tool
 def query_documents_tool(query: str):
     """Query the knowledge base for documents matching the query about the user's issue, technical issue or question or guidance
@@ -541,6 +671,18 @@ def agent_node(state: GraphState) -> GraphState:
             """))
             current_llm = state.get("llm_instance", llm)
             resp = current_llm.invoke(messages_for_llm)
+            return {"messages": [resp]}
+        elif (last_message.name == "update_ticket_status_tool"):
+            messages_for_llm.append(SystemMessage(content=f"""
+                You are an IT Support Assistant. You have updated a ticket's status:
+                Confirm the status change to the user in a clear, friendly manner, Use markdown to highlight the important information.
+                Show the ticket ID, title, old status, new status, and any comments provided.
+                Use appropriate emojis for status indicators and congratulate successful progress.
+                If there was an error, provide helpful guidance on permissions or valid status values.
+                {last_message.content}
+            """))
+            current_llm = state.get("llm_instance", llm)
+            resp = current_llm.invoke(messages_for_llm)
             return {"messages": [resp]} 
 
     for msg in state["messages"]:
@@ -616,7 +758,8 @@ def run_workflow(db: Session, current_user: User, user_message: str, conversatio
     add_note_tool = add_note_to_ticket_tool_factory(db, user_dict)
     query_tickets_tool = query_tickets_tool_factory(db, user_dict)
     get_assigned_tickets_tool = get_assigned_tickets_tool_factory(db, user_dict)
-    workflow_tools = [create_ticket_tool, add_note_tool, query_tickets_tool, get_assigned_tickets_tool, query_documents_tool]
+    update_ticket_status_tool = update_ticket_status_tool_factory(db, user_dict)
+    workflow_tools = [create_ticket_tool, add_note_tool, query_tickets_tool, get_assigned_tickets_tool, update_ticket_status_tool, query_documents_tool]
     
     # Bind tools to LLM and create tool node
     llm_with_tools = llm.bind_tools(workflow_tools)
@@ -637,12 +780,14 @@ def run_workflow(db: Session, current_user: User, user_message: str, conversatio
 3. add_note_to_ticket_tool: Add notes to existing tickets (for technicians/admins)
 4. query_tickets_tool: Search and retrieve existing support tickets (with ID, text search, status filters)
 5. get_assigned_tickets_tool: Get tickets assigned to the current user (technicians/admins only)
+6. update_ticket_status_tool: Update ticket status (technicians/admins only) - open, in_progress, resolved, closed
 
 Guidelines:
 - Always search the knowledge base first using query_documents_tool when users ask technical questions
 - Use the retrieved documents to provide accurate, helpful responses
 - Create tickets for issues that require follow-up or cannot be resolved immediately
 - Use get_assigned_tickets_tool when technicians/admins ask about their workload or assigned tickets
+- Use update_ticket_status_tool when technicians/admins need to change ticket status during workflow
 - Always respond with ticket information: ticket_id, ticket_title, ticket_description, ticket notes, ticket_priority, ticket_status when user asks for ticket information or after creating a ticket
 - Be helpful, professional, and provide step-by-step guidance when possible
 - IMPORTANT: If you can't find relevant information, DO NOT respond with common guide, ask user to contact IT support directly
