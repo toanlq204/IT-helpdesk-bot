@@ -139,17 +139,21 @@ def add_note_to_ticket_tool_factory(db: Session, user_info: dict):
 def query_tickets_tool_factory(db: Session, user_info: dict):
     """Factory function to create the query tickets tool with database access"""
     @tool
-    def query_tickets_tool(status: Optional[str] = None, limit: int = 10):
-        """Query support tickets based on user role and optional status filter
+    def query_tickets_tool(status: Optional[str] = None, ticket_id: Optional[int] = None, search_text: Optional[str] = None, limit: int = 10):
+        """Query support tickets with multiple search options:
+        - ticket_id: Get specific ticket by ID (if user has access)
+        - search_text: Search in ticket titles and descriptions
+        - status: Filter by status (open, in_progress, resolved, closed)
+        - limit: Maximum number of tickets to return
+        
         User Role: Can only see their own created tickets
         Admin: Can see all tickets
-        Technician: Can see tickets assigned to them or unassigned tickets
-        Status filter: open, in_progress, resolved, closed"""
+        Technician: Can see tickets assigned to them or unassigned tickets"""
         try:
-            from ..services.ticket_service import get_tickets_for_user
+            from ..services.ticket_service import get_tickets_for_user, get_ticket_by_id
             from ..models.user import User
             
-            logger.info(f"Querying tickets for user {user_info['id']} with status: {status}")
+            logger.info(f"Querying tickets for user {user_info['id']} - ID: {ticket_id}, search: {search_text}, status: {status}")
             
             # Get the user from database to ensure we have all needed fields
             user = db.query(User).filter(User.id == user_info['id']).first()
@@ -159,8 +163,80 @@ def query_tickets_tool_factory(db: Session, user_info: dict):
                     "message": "User not found"
                 }
             
-            # Get tickets based on user role
+            # Handle specific ticket ID query
+            if ticket_id:
+                ticket = get_ticket_by_id(db, ticket_id, user)
+                if not ticket:
+                    return {
+                        "status": "error",
+                        "message": f"Ticket #{ticket_id} not found or you don't have access to it"
+                    }
+                
+                # Format single ticket information with notes
+                ticket_info = {
+                    "ticket_id": ticket.id,
+                    "title": ticket.title,
+                    "description": ticket.description,
+                    "status": ticket.status,
+                    "priority": ticket.priority,
+                    "created_at": ticket.created_at.isoformat(),
+                    "updated_at": ticket.updated_at.isoformat(),
+                    "created_by": ticket.created_by,
+                    "assigned_to": ticket.assigned_to,
+                    "creator_name": ticket.creator.email if ticket.creator else "Unknown",
+                    "assignee_name": ticket.assignee.email if ticket.assignee else "Unassigned",
+                    "notes": []
+                }
+                
+                # Add notes information
+                for note in ticket.notes:
+                    note_info = {
+                        "note_id": note.id,
+                        "content": note.body,
+                        "author": note.author.email if note.author else "Unknown",
+                        "is_internal": note.is_internal,
+                        "created_at": note.created_at.isoformat()
+                    }
+                    if (not note.is_internal):
+                        ticket_info["notes"].append(note_info)
+                    elif ((user_info['role'] == "admin" or user_info['role'] == "technician")):
+                        ticket_info["notes"].append(note_info)
+                
+                # Create detailed summary for single ticket
+                summary = f"Ticket #{ticket.id}: {ticket.title}\n"
+                summary += f"Status: {ticket.status} | Priority: {ticket.priority}\n"
+                summary += f"Created: {ticket.created_at.strftime('%Y-%m-%d %H:%M')} by {ticket_info['creator_name']}\n"
+                summary += f"Assigned to: {ticket_info['assignee_name']}\n"
+                summary += f"Last updated: {ticket.updated_at.strftime('%Y-%m-%d %H:%M')}\n\n"
+                summary += f"Description:\n{ticket.description}\n\n"
+                
+                if ticket_info["notes"]:
+                    summary += f"Notes ({len(ticket_info["notes"])}):\n"
+                    for note in ticket_info["notes"]:
+                        note_type = " [INTERNAL]" if note["is_internal"] else ""
+                        summary += f"- {note["created_at"]} by {note["author"] if note["author"] else 'Unknown'}{note_type}:\n"
+                        summary += f"  {note["content"]}\n\n"
+                else:
+                    summary += "No notes yet.\n"
+                
+                return {
+                    "status": "success",
+                    "message": summary,
+                    "tickets": [ticket_info],
+                    "total_count": 1,
+                    "query_type": "single_ticket"
+                }
+            
+            # Get tickets based on user role for general queries
             tickets = get_tickets_for_user(db, user)
+            
+            # Apply search filter if provided
+            if search_text:
+                search_lower = search_text.lower()
+                tickets = [
+                    ticket for ticket in tickets 
+                    if search_lower in ticket.title.lower() or search_lower in ticket.description.lower()
+                ]
             
             # Apply status filter if provided
             if status:
@@ -170,11 +246,18 @@ def query_tickets_tool_factory(db: Session, user_info: dict):
             tickets = tickets[:limit]
             
             if not tickets:
-                status_msg = f" with status '{status}'" if status else ""
+                filters = []
+                if status:
+                    filters.append(f"status '{status}'")
+                if search_text:
+                    filters.append(f"search term '{search_text}'")
+                
+                filter_msg = " with " + " and ".join(filters) if filters else ""
                 return {
                     "status": "success",
-                    "message": f"No tickets found{status_msg} for your account",
-                    "tickets": []
+                    "message": f"No tickets found{filter_msg} for your account",
+                    "tickets": [],
+                    "query_type": "search" if search_text else "filter"
                 }
             
             # Format ticket information
@@ -196,14 +279,22 @@ def query_tickets_tool_factory(db: Session, user_info: dict):
                 ticket_list.append(ticket_info)
             
             # Create summary message
-            status_filter = f" with status '{status}'" if status else ""
+            filters = []
+            if status:
+                filters.append(f"status '{status}'")
+            if search_text:
+                filters.append(f"matching '{search_text}'")
+            
+            filter_desc = " with " + " and ".join(filters) if filters else ""
+            
             role_desc = {
                 "user": "your created tickets",
                 "technician": "tickets assigned to you or unassigned",
                 "admin": "all tickets in the system"
             }.get(user.role, "tickets")
             
-            summary = f"Found {len(ticket_list)} {role_desc}{status_filter}:\n\n"
+            query_type = "search" if search_text else ("filter" if status else "list")
+            summary = f"Found {len(ticket_list)} {role_desc}{filter_desc}:\n\n"
             for ticket in ticket_list:
                 summary += f"Ticket #{ticket['ticket_id']}: {ticket['title']}\n"
                 summary += f"  Status: {ticket['status']} | Priority: {ticket['priority']}\n"
@@ -216,7 +307,9 @@ def query_tickets_tool_factory(db: Session, user_info: dict):
                 "tickets": ticket_list,
                 "total_count": len(ticket_list),
                 "user_role": user.role,
-                "status_filter": status
+                "query_type": query_type,
+                "status_filter": status,
+                "search_text": search_text
             }
             
         except Exception as e:
@@ -298,7 +391,7 @@ def agent_node(state: GraphState) -> GraphState:
         if (last_message.name == "create_ticket_tool"):
             messages_for_llm.append(SystemMessage(content=f"""
                 You are an IT Support Assistant. You have created a new ticket:
-                Reponse all ticket information to the user in a friendly and helpful manner.
+                Reponse all ticket information to the user in a friendly and helpful manner,  Use markdown to highlight the important information.
                 {last_message.content}
             """))
             current_llm = state.get("llm_instance", llm)
@@ -307,7 +400,7 @@ def agent_node(state: GraphState) -> GraphState:
         elif (last_message.name == "add_note_to_ticket_tool"):
             messages_for_llm.append(SystemMessage(content=f"""
                 You are an IT Support Assistant. You have helped to add a note to a ticket:
-                Response with the note information to the user in a friendly and helpful manner.
+                Response with the note information to the user in a friendly and helpful manner, Use markdown to highlight the important information.
                 Include the note details and confirm it was added successfully or not.
                 {last_message.content}
             """))
@@ -317,7 +410,7 @@ def agent_node(state: GraphState) -> GraphState:
         elif (last_message.name == "query_tickets_tool"):
             messages_for_llm.append(SystemMessage(content=f"""
                 You are an IT Support Assistant. You have retrieved ticket information:
-                Present the ticket list to the user in a clear, organized manner.
+                Present the ticket list to the user in a clear, organized manner, Use markdown to highlight the important information.
                 Include ticket IDs, titles, status, priority, and key details.
                 If no tickets were found, explain what the user can see based on their role.
                 {last_message.content}
