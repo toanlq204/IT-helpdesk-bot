@@ -136,12 +136,97 @@ def add_note_to_ticket_tool_factory(db: Session, user_info: dict):
     
     return add_note_to_ticket_tool
 
-@tool
-def query_tickets_tool(status: Optional[str] = None):
-    """Query all support tickets for the user with status, title, and description
-    Default is to return all tickets with status in progress, or open"""
-    logger.info(f"Querying tickets with status: {status}")
-    return {"status": "success", "message": "Tickets queried successfully"}
+def query_tickets_tool_factory(db: Session, user_info: dict):
+    """Factory function to create the query tickets tool with database access"""
+    @tool
+    def query_tickets_tool(status: Optional[str] = None, limit: int = 10):
+        """Query support tickets based on user role and optional status filter
+        User Role: Can only see their own created tickets
+        Admin: Can see all tickets
+        Technician: Can see tickets assigned to them or unassigned tickets
+        Status filter: open, in_progress, resolved, closed"""
+        try:
+            from ..services.ticket_service import get_tickets_for_user
+            from ..models.user import User
+            
+            logger.info(f"Querying tickets for user {user_info['id']} with status: {status}")
+            
+            # Get the user from database to ensure we have all needed fields
+            user = db.query(User).filter(User.id == user_info['id']).first()
+            if not user:
+                return {
+                    "status": "error",
+                    "message": "User not found"
+                }
+            
+            # Get tickets based on user role
+            tickets = get_tickets_for_user(db, user)
+            
+            # Apply status filter if provided
+            if status:
+                tickets = [ticket for ticket in tickets if ticket.status == status]
+            
+            # Limit results
+            tickets = tickets[:limit]
+            
+            if not tickets:
+                status_msg = f" with status '{status}'" if status else ""
+                return {
+                    "status": "success",
+                    "message": f"No tickets found{status_msg} for your account",
+                    "tickets": []
+                }
+            
+            # Format ticket information
+            ticket_list = []
+            for ticket in tickets:
+                ticket_info = {
+                    "ticket_id": ticket.id,
+                    "title": ticket.title,
+                    "description": ticket.description,
+                    "status": ticket.status,
+                    "priority": ticket.priority,
+                    "created_at": ticket.created_at.isoformat(),
+                    "updated_at": ticket.updated_at.isoformat(),
+                    "created_by": ticket.created_by,
+                    "assigned_to": ticket.assigned_to,
+                    "creator_name": ticket.creator.email if ticket.creator else "Unknown",
+                    "assignee_name": ticket.assignee.email if ticket.assignee else "Unassigned"
+                }
+                ticket_list.append(ticket_info)
+            
+            # Create summary message
+            status_filter = f" with status '{status}'" if status else ""
+            role_desc = {
+                "user": "your created tickets",
+                "technician": "tickets assigned to you or unassigned",
+                "admin": "all tickets in the system"
+            }.get(user.role, "tickets")
+            
+            summary = f"Found {len(ticket_list)} {role_desc}{status_filter}:\n\n"
+            for ticket in ticket_list:
+                summary += f"Ticket #{ticket['ticket_id']}: {ticket['title']}\n"
+                summary += f"  Status: {ticket['status']} | Priority: {ticket['priority']}\n"
+                summary += f"  Created: {ticket['created_at'][:10]} | Assignee: {ticket['assignee_name']}\n"
+                summary += f"  Description: {ticket['description'][:100]}{'...' if len(ticket['description']) > 100 else ''}\n\n"
+            
+            return {
+                "status": "success",
+                "message": summary,
+                "tickets": ticket_list,
+                "total_count": len(ticket_list),
+                "user_role": user.role,
+                "status_filter": status
+            }
+            
+        except Exception as e:
+            logger.error(f"Error querying tickets for user {user_info['id']}: {e}")
+            return {
+                "status": "error",
+                "message": f"Error querying tickets: {str(e)}"
+            }
+    
+    return query_tickets_tool
 
 @tool
 def query_documents_tool(query: str):
@@ -228,6 +313,17 @@ def agent_node(state: GraphState) -> GraphState:
             """))
             current_llm = state.get("llm_instance", llm)
             resp = current_llm.invoke(messages_for_llm)
+            return {"messages": [resp]}
+        elif (last_message.name == "query_tickets_tool"):
+            messages_for_llm.append(SystemMessage(content=f"""
+                You are an IT Support Assistant. You have retrieved ticket information:
+                Present the ticket list to the user in a clear, organized manner.
+                Include ticket IDs, titles, status, priority, and key details.
+                If no tickets were found, explain what the user can see based on their role.
+                {last_message.content}
+            """))
+            current_llm = state.get("llm_instance", llm)
+            resp = current_llm.invoke(messages_for_llm)
             return {"messages": [resp]} 
 
     for msg in state["messages"]:
@@ -301,6 +397,7 @@ def run_workflow(db: Session, current_user: User, user_message: str, conversatio
     # Initialize tools with database access
     create_ticket_tool = create_ticket_tool_factory(db, user_dict)
     add_note_tool = add_note_to_ticket_tool_factory(db, user_dict)
+    query_tickets_tool = query_tickets_tool_factory(db, user_dict)
     workflow_tools = [create_ticket_tool, add_note_tool, query_tickets_tool, query_documents_tool]
     
     # Bind tools to LLM and create tool node
