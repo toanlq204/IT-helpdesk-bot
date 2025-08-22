@@ -84,6 +84,11 @@ def add_note_to_ticket_tool_factory(db: Session, user_info: dict):
             
             logger.info(f"Adding note to ticket {ticket_id} by user {user_info['id']}")
             note = "AI Assistant added this note: " + note
+            if user_info['role'] == "user" and is_internal:
+                return {
+                    "status": "error",
+                    "message": "You are not authorized to add internal notes"
+                }
             # Create note data
             note_data = TicketNoteCreate(
                 body=note,
@@ -216,9 +221,9 @@ def agent_node(state: GraphState) -> GraphState:
             return {"messages": [resp]}
         elif (last_message.name == "add_note_to_ticket_tool"):
             messages_for_llm.append(SystemMessage(content=f"""
-                You are an IT Support Assistant. You have added a note to a ticket:
+                You are an IT Support Assistant. You have helped to add a note to a ticket:
                 Response with the note information to the user in a friendly and helpful manner.
-                Include the note details and confirm it was added successfully.
+                Include the note details and confirm it was added successfully or not.
                 {last_message.content}
             """))
             current_llm = state.get("llm_instance", llm)
