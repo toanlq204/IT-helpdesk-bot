@@ -40,14 +40,14 @@ async def send_message(
         "content": msg.content,
         "metadata": msg.metadata
     } for msg in conversation.messages]
-
+    messages.append({"role": "user", "content": chat_message.message})
     user_message = chat_message.message
 
     # Add user message
     add_message(db, conversation.id, "user", chat_message.message)
     
     # Generate placeholder response
-    response_data = placeholder_reply(db, current_user.id, chat_message.session_id, chat_message.message, messages)
+    response_data = placeholder_reply(db, current_user, chat_message.session_id, chat_message.message, messages)
     
     # Add assistant message
     add_message(db, conversation.id, "assistant", response_data["reply"], message_metadata={"citations": response_data["citations"]})
