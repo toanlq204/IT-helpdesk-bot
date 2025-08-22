@@ -72,12 +72,64 @@ def create_ticket_tool_factory(db: Session, user_info: dict):
     
     return create_ticket_tool
 
-@tool
-def add_note_to_ticket_tool(ticket_id: str, note: str):
-    """Add a note to an existing support ticket with ticket_id and note
-    Techinician and Admin can add internal notes to a ticket"""
-    logger.info(f"Adding note to ticket with ticket_id: {ticket_id} and note: {note}")
-    return {"status": "success", "message": "Note added successfully"}
+def add_note_to_ticket_tool_factory(db: Session, user_info: dict):
+    """Factory function to create the add note tool with database access"""
+    @tool
+    def add_note_to_ticket_tool(ticket_id: int, note: str, is_internal: bool = False):
+        """Add a note to an existing support ticket with ticket_id, note content, and internal flag
+        Set is_internal=True for notes only visible to technicians and admins"""
+        try:
+            from ..services.ticket_service import add_ticket_note
+            from ..schemas.ticket import TicketNoteCreate
+            
+            logger.info(f"Adding note to ticket {ticket_id} by user {user_info['id']}")
+            note = "AI Assistant added this note: " + note
+            # Create note data
+            note_data = TicketNoteCreate(
+                body=note,
+                is_internal=is_internal
+            )
+            
+            # Create a simple user object for the ticket service
+            from ..models.user import User
+            
+            # Get the user from database to ensure we have all needed fields
+            user = db.query(User).filter(User.id == user_info['id']).first()
+            if not user:
+                return {
+                    "status": "error", 
+                    "message": "User not found"
+                }
+            
+            # Add the note to the ticket
+            new_note = add_ticket_note(db, ticket_id, note_data, user)
+            
+            if new_note:
+                note_type = "internal" if new_note.is_internal else "public"
+                return {
+                    "status": "success",
+                    "message": f"{note_type.title()} note added successfully to ticket #{ticket_id}",
+                    "note_id": new_note.id,
+                    "ticket_id": new_note.ticket_id,
+                    "note_content": new_note.body,
+                    "note_type": note_type,
+                    "author_id": new_note.author_id,
+                    "created_at": new_note.created_at.isoformat()
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": f"Failed to add note to ticket #{ticket_id}. Ticket may not exist or you may not have permission."
+                }
+                
+        except Exception as e:
+            logger.error(f"Error adding note to ticket {ticket_id}: {e}")
+            return {
+                "status": "error",
+                "message": f"Error adding note to ticket: {str(e)}"
+            }
+    
+    return add_note_to_ticket_tool
 
 @tool
 def query_tickets_tool(status: Optional[str] = None):
@@ -161,6 +213,16 @@ def agent_node(state: GraphState) -> GraphState:
             """))
             current_llm = state.get("llm_instance", llm)
             resp = current_llm.invoke(messages_for_llm)
+            return {"messages": [resp]}
+        elif (last_message.name == "add_note_to_ticket_tool"):
+            messages_for_llm.append(SystemMessage(content=f"""
+                You are an IT Support Assistant. You have added a note to a ticket:
+                Response with the note information to the user in a friendly and helpful manner.
+                Include the note details and confirm it was added successfully.
+                {last_message.content}
+            """))
+            current_llm = state.get("llm_instance", llm)
+            resp = current_llm.invoke(messages_for_llm)
             return {"messages": [resp]} 
 
     for msg in state["messages"]:
@@ -233,7 +295,8 @@ def run_workflow(db: Session, current_user: User, user_message: str, conversatio
     
     # Initialize tools with database access
     create_ticket_tool = create_ticket_tool_factory(db, user_dict)
-    workflow_tools = [create_ticket_tool, add_note_to_ticket_tool, query_tickets_tool, query_documents_tool]
+    add_note_tool = add_note_to_ticket_tool_factory(db, user_dict)
+    workflow_tools = [create_ticket_tool, add_note_tool, query_tickets_tool, query_documents_tool]
     
     # Bind tools to LLM and create tool node
     llm_with_tools = llm.bind_tools(workflow_tools)
