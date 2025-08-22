@@ -118,7 +118,6 @@ def add_note_to_ticket_tool_factory(db: Session, user_info: dict):
                     "ticket_id": new_note.ticket_id,
                     "note_content": new_note.body,
                     "note_type": note_type,
-                    "author_id": new_note.author_id,
                     "created_at": new_note.created_at.isoformat()
                 }
             else:
@@ -321,6 +320,119 @@ def query_tickets_tool_factory(db: Session, user_info: dict):
     
     return query_tickets_tool
 
+def get_assigned_tickets_tool_factory(db: Session, user_info: dict):
+    """Factory function to create the get assigned tickets tool with database access"""
+    @tool
+    def get_assigned_tickets_tool(status: Optional[str] = None, limit: int = 10):
+        """Get tickets assigned to the current user (for technicians and admins)
+        - status: Filter by status (open, in_progress, resolved, closed)
+        - limit: Maximum number of tickets to return
+        
+        Only technicians and admins can use this tool to see their assigned workload"""
+        try:
+            from ..services.ticket_service import get_assigned_tickets
+            from ..models.user import User
+            
+            logger.info(f"Getting assigned tickets for user {user_info['id']} with status: {status}")
+            
+            # Check if user has permission to use this tool
+            if user_info['role'] not in ['technician', 'admin']:
+                return {
+                    "status": "error",
+                    "message": "Only technicians and admins can view assigned tickets. Regular users should use the general ticket query to see their created tickets."
+                }
+            
+            # Get the user from database
+            user = db.query(User).filter(User.id == user_info['id']).first()
+            if not user:
+                return {
+                    "status": "error",
+                    "message": "User not found"
+                }
+            
+            # Get tickets assigned to this user
+            assigned_tickets = get_assigned_tickets(db, user.id)
+            
+            # Apply status filter if provided
+            if status:
+                assigned_tickets = [ticket for ticket in assigned_tickets if ticket.status == status]
+            
+            # Limit results
+            assigned_tickets = assigned_tickets[:limit]
+            
+            if not assigned_tickets:
+                status_msg = f" with status '{status}'" if status else ""
+                return {
+                    "status": "success",
+                    "message": f"No tickets currently assigned to you{status_msg}",
+                    "tickets": [],
+                    "total_count": 0,
+                    "user_role": user.role
+                }
+            
+            # Format ticket information
+            ticket_list = []
+            for ticket in assigned_tickets:
+                ticket_info = {
+                    "ticket_id": ticket.id,
+                    "title": ticket.title,
+                    "description": ticket.description,
+                    "status": ticket.status,
+                    "priority": ticket.priority,
+                    "created_at": ticket.created_at.isoformat(),
+                    "updated_at": ticket.updated_at.isoformat(),
+                    "created_by": ticket.created_by,
+                    "assigned_to": ticket.assigned_to,
+                    "creator_name": ticket.creator.email if ticket.creator else "Unknown",
+                    "assignee_name": ticket.assignee.email if ticket.assignee else "Unassigned"
+                }
+                ticket_list.append(ticket_info)
+            
+            # Create summary message
+            status_filter = f" with status '{status}'" if status else ""
+            priority_counts = {}
+            for ticket in ticket_list:
+                priority = ticket['priority']
+                priority_counts[priority] = priority_counts.get(priority, 0) + 1
+            
+            summary = f"You have {len(ticket_list)} tickets assigned to you{status_filter}:\n\n"
+            
+            # Add priority breakdown
+            if priority_counts:
+                priority_breakdown = []
+                for priority in ['high', 'medium', 'low']:
+                    if priority in priority_counts:
+                        priority_breakdown.append(f"{priority_counts[priority]} {priority}")
+                if priority_breakdown:
+                    summary += f"Priority breakdown: {', '.join(priority_breakdown)}\n\n"
+            
+            # List tickets
+            for ticket in ticket_list:
+                priority_indicator = "🔥" if ticket['priority'] == 'high' else ("⚡" if ticket['priority'] == 'medium' else "📝")
+                summary += f"{priority_indicator} Ticket #{ticket['ticket_id']}: {ticket['title']}\n"
+                summary += f"  Status: {ticket['status']} | Priority: {ticket['priority']}\n"
+                summary += f"  Created: {ticket['created_at'][:10]} by {ticket['creator_name']}\n"
+                summary += f"  Description: {ticket['description'][:100]}{'...' if len(ticket['description']) > 100 else ''}\n\n"
+            
+            return {
+                "status": "success",
+                "message": summary,
+                "tickets": ticket_list,
+                "total_count": len(ticket_list),
+                "user_role": user.role,
+                "priority_counts": priority_counts,
+                "status_filter": status
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting assigned tickets for user {user_info['id']}: {e}")
+            return {
+                "status": "error",
+                "message": f"Error retrieving assigned tickets: {str(e)}"
+            }
+    
+    return get_assigned_tickets_tool
+
 @tool
 def query_documents_tool(query: str):
     """Query the knowledge base for documents matching the query about the user's issue, technical issue or question or guidance
@@ -417,6 +529,18 @@ def agent_node(state: GraphState) -> GraphState:
             """))
             current_llm = state.get("llm_instance", llm)
             resp = current_llm.invoke(messages_for_llm)
+            return {"messages": [resp]}
+        elif (last_message.name == "get_assigned_tickets_tool"):
+            messages_for_llm.append(SystemMessage(content=f"""
+                You are an IT Support Assistant. You have retrieved the user's assigned tickets:
+                Present the assigned ticket workload in a clear, organized manner, Use markdown to highlight the important information.
+                Focus on helping technicians/admins prioritize their work by showing priority levels and status.
+                Include ticket IDs, titles, status, priority, and creation details.
+                If no tickets are assigned, acknowledge that their workload is clear.
+                {last_message.content}
+            """))
+            current_llm = state.get("llm_instance", llm)
+            resp = current_llm.invoke(messages_for_llm)
             return {"messages": [resp]} 
 
     for msg in state["messages"]:
@@ -491,7 +615,8 @@ def run_workflow(db: Session, current_user: User, user_message: str, conversatio
     create_ticket_tool = create_ticket_tool_factory(db, user_dict)
     add_note_tool = add_note_to_ticket_tool_factory(db, user_dict)
     query_tickets_tool = query_tickets_tool_factory(db, user_dict)
-    workflow_tools = [create_ticket_tool, add_note_tool, query_tickets_tool, query_documents_tool]
+    get_assigned_tickets_tool = get_assigned_tickets_tool_factory(db, user_dict)
+    workflow_tools = [create_ticket_tool, add_note_tool, query_tickets_tool, get_assigned_tickets_tool, query_documents_tool]
     
     # Bind tools to LLM and create tool node
     llm_with_tools = llm.bind_tools(workflow_tools)
@@ -510,15 +635,17 @@ def run_workflow(db: Session, current_user: User, user_message: str, conversatio
 1. query_documents_tool: Search the knowledge base for relevant documentation and solutions
 2. create_ticket_tool: Create new support tickets for issues that need tracking
 3. add_note_to_ticket_tool: Add notes to existing tickets (for technicians/admins)
-4. query_tickets_tool: Search and retrieve existing support tickets
+4. query_tickets_tool: Search and retrieve existing support tickets (with ID, text search, status filters)
+5. get_assigned_tickets_tool: Get tickets assigned to the current user (technicians/admins only)
 
 Guidelines:
 - Always search the knowledge base first using query_documents_tool when users ask technical questions
 - Use the retrieved documents to provide accurate, helpful responses
 - Create tickets for issues that require follow-up or cannot be resolved immediately
-- Always reponse with ticket information: ticket_id, ticket_title, ticket_description, ticket notes, ticket_priority, ticket_status when user ask for ticket information or after creating a ticket
+- Use get_assigned_tickets_tool when technicians/admins ask about their workload or assigned tickets
+- Always respond with ticket information: ticket_id, ticket_title, ticket_description, ticket notes, ticket_priority, ticket_status when user asks for ticket information or after creating a ticket
 - Be helpful, professional, and provide step-by-step guidance when possible
-- IMPORTANT: If you can't find relevant information, DO NOT reponse with common guide, ask user to contact IT support directly
+- IMPORTANT: If you can't find relevant information, DO NOT respond with common guide, ask user to contact IT support directly
 """
     formatted_messages.append(SystemMessage(content=system_prompt))
     
