@@ -156,7 +156,8 @@ def agent_node(state: GraphState) -> GraphState:
         if (last_message.name == "create_ticket_tool"):
             messages_for_llm.append(SystemMessage(content=f"""
                 You are an IT Support Assistant. You have created a new ticket:
-                Reponse {last_message.content} to the user in a friendly and helpful manner.
+                Reponse all ticket information to the user in a friendly and helpful manner.
+                {last_message.content}
             """))
             current_llm = state.get("llm_instance", llm)
             resp = current_llm.invoke(messages_for_llm)
