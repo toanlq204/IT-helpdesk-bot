@@ -29,7 +29,7 @@ export const TicketDetailPage = () => {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const { updateTicket, addNote, assignTicket, unassignTicket, isUpdating, isAssigning } = useTickets()
-  const { technicians, isLoading: isLoadingTechnicians } = useTechnicians()
+  const { technicians } = useTechnicians()
   
   const ticketId = id ? parseInt(id) : 0
   const { ticket, isLoading, error, refetch } = useTicket(ticketId)

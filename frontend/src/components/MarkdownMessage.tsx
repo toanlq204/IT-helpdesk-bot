@@ -57,7 +57,8 @@ export const MarkdownMessage = ({ content, className = '' }: MarkdownMessageProp
           ),
           
           // Customize code styles
-          code: ({ inline, children, className }) => {
+          code: ({ children, className }) => {
+            const inline = !className;
             if (inline) {
               return (
                 <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono text-foreground border">

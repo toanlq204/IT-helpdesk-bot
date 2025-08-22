@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { chatApi, ChatMessage, Conversation } from '../api/chat'
+import { chatApi } from '../api/chat'
 
 export const useChat = () => {
   const queryClient = useQueryClient()

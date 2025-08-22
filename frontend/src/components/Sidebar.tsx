@@ -11,11 +11,10 @@ import {
   Menu,
   X,
   HelpCircle,
-  Plus,
-  Clock
+  Plus
 } from 'lucide-react'
 import { useState } from 'react'
-import { formatDistanceToNow } from 'date-fns'
+
 
 export const Sidebar = () => {
   const { user, logout } = useAuth()

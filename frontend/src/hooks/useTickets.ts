@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ticketsApi, Ticket, CreateTicketRequest, UpdateTicketRequest, CreateNoteRequest, User } from '../api/tickets'
+import { ticketsApi, UpdateTicketRequest, CreateNoteRequest } from '../api/tickets'
 
 export const useTickets = () => {
   const queryClient = useQueryClient()
@@ -76,7 +76,6 @@ export const useTickets = () => {
 }
 
 export const useTicket = (id: number) => {
-  const queryClient = useQueryClient()
 
   const ticketQuery = useQuery({
     queryKey: ['tickets', id],
