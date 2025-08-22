@@ -23,13 +23,54 @@ class GraphState(TypedDict):
     trace_ids: List[str]
     user_id: str
     loop_count: int
+    llm_instance: object  # Store the LLM instance in state
 
 
-@tool
-def create_ticket_tool(title: str, description: str):
-    """Create a new support ticket with title and description"""
-    logger.info(f"Creating ticket with title: {title} and description: {description}")
-    return {"status": "success", "message": "Ticket created successfully"}
+def create_ticket_tool_factory(db: Session, user_info: dict):
+    """Factory function to create the ticket tool with database access"""
+    @tool
+    def create_ticket_tool(title: str, description: str, priority: str = "medium"):
+        """Create a new support ticket with title, description, and priority (low/medium/high)"""
+        try:
+            from ..services.ticket_service import create_ticket
+            from ..schemas.ticket import TicketCreate
+            
+            logger.info(f"Creating ticket for user {user_info['id']}: {title}")
+            
+            # Create ticket data
+            ticket_data = TicketCreate(
+                title=title,
+                description=description,
+                priority=priority
+            )
+            
+            # Create the ticket in database
+            new_ticket = create_ticket(db, ticket_data, user_info['id'])
+            
+            if new_ticket:
+                return {
+                    "status": "success",
+                    "message": f"Ticket #{new_ticket.id} created successfully: '{title}'",
+                    "ticket_id": new_ticket.id,
+                    "ticket_title": new_ticket.title,
+                    "ticket_description": new_ticket.description,
+                    "ticket_priority": new_ticket.priority,
+                    "ticket_status": new_ticket.status
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": "Failed to create ticket due to database error"
+                }
+                
+        except Exception as e:
+            logger.error(f"Error creating ticket: {e}")
+            return {
+                "status": "error",
+                "message": f"Error creating ticket: {str(e)}"
+            }
+    
+    return create_ticket_tool
 
 @tool
 def add_note_to_ticket_tool(ticket_id: str, note: str):
@@ -110,7 +151,17 @@ def agent_node(state: GraphState) -> GraphState:
     # Extract tool results and include them in the system context for Azure OpenAI compatibility
     messages_for_llm = []
     tool_context_parts = []
-    
+    last_message = state["messages"][-1]
+    if isinstance(last_message, ToolMessage):
+        if (last_message.name == "create_ticket_tool"):
+            messages_for_llm.append(SystemMessage(content=f"""
+                You are an IT Support Assistant. You have created a new ticket:
+                Reponse {last_message.content} to the user in a friendly and helpful manner.
+            """))
+            current_llm = state.get("llm_instance", llm)
+            resp = current_llm.invoke(messages_for_llm)
+            return {"messages": [resp]} 
+
     for msg in state["messages"]:
         if isinstance(msg, ToolMessage):
             # Extract tool result content to use as context
@@ -119,7 +170,9 @@ def agent_node(state: GraphState) -> GraphState:
             messages_for_llm.append(msg)
     
     if messages_for_llm:
-        resp = llm.invoke(messages_for_llm)
+        # Use the LLM instance from state (with tools bound)
+        current_llm = state.get("llm_instance", llm)
+        resp = current_llm.invoke(messages_for_llm)
         return {"messages": [resp]}  # Only return the new message, LangGraph will add it to existing
     
     return {"messages": []}
@@ -148,9 +201,10 @@ llm = ChatOpenAI(
     timeout=30,
 )
 
-tools = [create_ticket_tool, add_note_to_ticket_tool, query_tickets_tool, query_documents_tool]
-llm = llm.bind_tools(tools)
-tool_node = ToolNode(tools)
+# Tools will be initialized in run_workflow with database access
+tools = []
+llm_with_tools = None
+tool_node = None
 
 graph = StateGraph(GraphState)
  
@@ -168,6 +222,26 @@ graph.add_edge("tools", "agent")
 
 def run_workflow(db: Session, current_user: User, user_message: str, conversation_history: List[Dict], session_id: str) -> str:
     """Run the workflow with initial messages, user info, and user ID"""
+    
+    # Convert User object to serializable dictionary
+    user_dict = {
+        "id": current_user.id,
+        "email": current_user.email,
+        "role": current_user.role
+    }
+    
+    # Initialize tools with database access
+    create_ticket_tool = create_ticket_tool_factory(db, user_dict)
+    workflow_tools = [create_ticket_tool, add_note_to_ticket_tool, query_tickets_tool, query_documents_tool]
+    
+    # Bind tools to LLM and create tool node
+    llm_with_tools = llm.bind_tools(workflow_tools)
+    workflow_tool_node = ToolNode(workflow_tools)
+    
+    # Update global tool_node for this workflow execution
+    global tool_node
+    tool_node = workflow_tool_node
+    
     # Convert conversation history to LangChain format
     formatted_messages = []
     
@@ -183,8 +257,9 @@ Guidelines:
 - Always search the knowledge base first using query_documents_tool when users ask technical questions
 - Use the retrieved documents to provide accurate, helpful responses
 - Create tickets for issues that require follow-up or cannot be resolved immediately
+- Always reponse with ticket information: ticket_id, ticket_title, ticket_description, ticket notes, ticket_priority, ticket_status when user ask for ticket information or after creating a ticket
 - Be helpful, professional, and provide step-by-step guidance when possible
-- If you can't find relevant information, ask clarifying questions or suggest contacting IT support directly
+- IMPORTANT: If you can't find relevant information, DO NOT reponse with common guide, ask user to contact IT support directly
 """
     formatted_messages.append(SystemMessage(content=system_prompt))
     
@@ -206,20 +281,14 @@ Guidelines:
         content_preview = str(msg.content)[:100] + "..." if len(str(msg.content)) > 100 else str(msg.content)
         logger.info(f"Initial message {i}: type={msg_type}, content={content_preview}")
     
-    # Convert User object to serializable dictionary
-    user_dict = {
-        "id": current_user.id,
-        "email": current_user.email,
-        "role": current_user.role
-    }
-    
     state = GraphState(
         messages=formatted_messages,
         user_info=user_dict,
         retrieved_docs=[],
         trace_ids=[],
         user_id=str(current_user.id),
-        loop_count=0
+        loop_count=0,
+        llm_instance=llm_with_tools
     )
     app = graph.compile(checkpointer=MemorySaver())
     result = app.invoke(state, config={"configurable": {"thread_id": session_id}})
