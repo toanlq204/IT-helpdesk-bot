@@ -437,13 +437,10 @@ def update_ticket_status_tool_factory(db: Session, user_info: dict):
     """Factory function to create the update ticket status tool with database access"""
     @tool
     def update_ticket_status_tool(ticket_id: int, new_status: str, comment: Optional[str] = None):
-        """Update the status of a ticket (for technicians and admins)
+        """Update the status of a ticket
         - ticket_id: ID of the ticket to update
         - new_status: New status (open, in_progress, resolved, closed)
-        - comment: Optional comment explaining the status change
-        
-        Technicians can update status of tickets assigned to them (cannot close tickets)
-        Admins can update status of any ticket including closing them"""
+        - comment: Optional comment explaining the status change"""
         try:
             from ..services.ticket_service import update_ticket, get_ticket_by_id
             from ..schemas.ticket import TicketUpdate
@@ -498,20 +495,19 @@ def update_ticket_status_tool_factory(db: Session, user_info: dict):
                     "current_status": ticket.status,
                     "no_change": True
                 }
-            
+            old_status = ticket.status
             # Create the update object
             ticket_update = TicketUpdate(status=new_status)
             
             # Update the ticket
             updated_ticket = update_ticket(db, ticket_id, ticket_update, user)
-            
             if updated_ticket:
                 # Add a system note about the status change if comment provided
                 if comment:
                     from ..schemas.ticket import TicketNoteCreate
                     from ..services.ticket_service import add_ticket_note
                     
-                    note_content = f"Status changed from '{ticket.status}' to '{new_status}': {comment}"
+                    note_content = f"Status changed from '{old_status}' to '{new_status}': {comment}"
                     note_data = TicketNoteCreate(
                         body=note_content,
                         is_internal=False  # Status changes are visible to all parties
@@ -519,7 +515,6 @@ def update_ticket_status_tool_factory(db: Session, user_info: dict):
                     add_ticket_note(db, ticket_id, note_data, user)
                 
                 # Create status change message
-                old_status = ticket.status
                 status_emoji = {
                     'open': '🆕',
                     'in_progress': '🔄', 
